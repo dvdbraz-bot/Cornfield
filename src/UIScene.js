@@ -103,7 +103,8 @@ class UIScene extends Phaser.Scene {
   // choice made (or null).
   talk(lines) {
     return new Promise(resolve => {
-      this.dlg = { lines, i: 0, resolve, choice: null };
+      // remember whether the controls were showing, to put them back after
+      this.dlg = { lines, i: 0, resolve, choice: null, controlsWere: this.controlsShown };
       Controls.dialogueOpen = true;
       this.setVisibleControls(false);
       this.dlgBox.setVisible(true);
@@ -145,8 +146,9 @@ class UIScene extends Phaser.Scene {
   next() {
     this.dlg.i++;
     if (this.dlg.i < this.dlg.lines.length) { this.showLine(); return; }
-    const { resolve, choice } = this.dlg;
+    const { resolve, choice, controlsWere } = this.dlg;
     this.dlg = null;
+    this.setVisibleControls(controlsWere);
     this.choiceBox.removeAll(true);
     this.dlgBox.setVisible(false);
     Controls.dialogueOpen = false;
@@ -162,10 +164,12 @@ class UIScene extends Phaser.Scene {
     if (this.nb) {
       this.nb.destroy();
       this.nb = null;
+      this.setVisibleControls(this.controlsBeforeNotebook);
       if (game) this.scene.resume(Controls.gameScene);
       return;
     }
     if (game) this.scene.pause(Controls.gameScene);
+    this.controlsBeforeNotebook = this.controlsShown;
     this.setVisibleControls(false);
     const { width, height } = this.scale;
     this.nb = this.add.container(0, 0).setDepth(100);
