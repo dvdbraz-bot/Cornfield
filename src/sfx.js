@@ -357,7 +357,124 @@ const SFX = (() => {
     });
   }
 
+  // An old man's scream: a rising, harsh vowel that cracks.
+  function buildScream() {
+    const rand = rng(66);
+    return makeBuffer(1.8, (L, R, n) => {
+      voiced(L, 0.0, 0.25, 200, 'a', 0.5, rand);
+      let phase = 0;
+      const s0 = Math.floor(0.2 * SR);
+      for (let j = 0; s0 + j < n; j++) {
+        const t = j / SR;
+        const env = Math.min(1, t / 0.08) * Math.exp(-Math.max(0, t - 0.7) * 3);
+        const f0 = 230 + 140 * Math.min(1, t / 0.4) + 12 * Math.sin(2 * Math.PI * 7 * t) + (rand() - 0.5) * 30;
+        phase += 2 * Math.PI * f0 / SR;
+        let v = 0;
+        for (let k = 1; k <= 14; k++) {
+          const F = k * f0;
+          const a = Math.exp(-Math.pow((F - 900) / 300, 2)) + 0.7 * Math.exp(-Math.pow((F - 1500) / 350, 2)) + 0.4 * Math.exp(-Math.pow((F - 2700) / 400, 2)) + 0.08 / k;
+          v += a * Math.sin(k * phase);
+        }
+        v += (rand() * 2 - 1) * 0.35; // rasp
+        L[s0 + j] += v * env * 0.6;
+      }
+      R.set(L);
+      echo(L, R, [[0.09, 0.3], [0.21, 0.18]]);
+      normalize(L, R, 0.9);
+    });
+  }
+
+  // Spike: two barks, used by the lure.
+  function buildBark() {
+    const rand = rng(808);
+    return makeBuffer(1.2, (L, R) => {
+      [0.02, 0.32].forEach((st, i) => {
+        noiseBurst(L, st, 0.03, 0.4, rand, false);
+        voiced(L, st + 0.01, 0.16, 420 - i * 30, 'a', 0.9, rand);
+      });
+      lowpass(L, 0.4);
+      R.set(L);
+      echo(L, R, [[0.15, 0.3], [0.33, 0.15]]);
+      normalize(L, R, 0.8);
+    });
+  }
+
+  // A low growl in the corn (heard when it is driven off).
+  function buildGrowl() {
+    const rand = rng(13);
+    return makeBuffer(1.6, (L, R, n) => {
+      let lp = 0, ph = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / SR;
+        lp += 0.03 * ((rand() * 2 - 1) - lp);
+        ph += 2 * Math.PI * (55 + 6 * Math.sin(2 * Math.PI * 3 * t)) / SR;
+        const env = Math.sin(Math.PI * t / 1.6);
+        const v = (lp * 5 + 0.5 * Math.sin(ph) + 0.3 * Math.sin(2 * ph)) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 23 * t)) * env;
+        L[i] = v; R[i] = v * 0.9;
+      }
+      normalize(L, R, 0.9);
+    });
+  }
+
+  function buildGasp() {
+    const rand = rng(41);
+    return makeBuffer(0.6, (L, R, n) => {
+      let lp = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / n;
+        lp += 0.25 * ((rand() * 2 - 1) - lp);
+        const v = lp * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.3)), 0.5) * (1 - t);
+        L[i] = v; R[i] = v;
+      }
+      normalize(L, R, 0.8);
+    });
+  }
+
+  // Water dripping from the gutters after the rain (6 second loop).
+  function buildDrips() {
+    const rand = rng(303);
+    return makeBuffer(6, (L, R, n) => {
+      for (let k = 0; k < 22; k++) {
+        const st = rand() * 5.9;
+        const f = 900 + rand() * 900;
+        const pan = rand() * 2 - 1;
+        const [gl, gr] = panGains(pan);
+        const amp = 0.3 + rand() * 0.7;
+        const s0 = Math.floor(st * SR);
+        for (let j = 0; j < 0.06 * SR && s0 + j < n; j++) {
+          const t = j / SR;
+          const v = amp * Math.sin(2 * Math.PI * f * (1 + 2.5 * t) * t) * Math.exp(-t * 70);
+          L[s0 + j] += v * gl; R[s0 + j] += v * gr;
+        }
+      }
+      normalize(L, R, 0.6);
+    });
+  }
+
+  // A television murmuring in the next room (8 second loop).
+  function buildTV() {
+    const rand = rng(515);
+    return makeBuffer(8, (L, R, n) => {
+      let t = 0.1;
+      while (t < 7.6) {
+        const dur = 0.08 + rand() * 0.14;
+        const vowel = ['a', 'u', 'i'][Math.floor(rand() * 3)];
+        voiced(L, t, dur, 120 + rand() * 40, vowel, 0.5, rand);
+        t += dur + (rand() < 0.2 ? 0.35 : 0.04);
+      }
+      lowpass(L, 0.12); // heard through a wall
+      R.set(L);
+      normalize(L, R, 0.5);
+    });
+  }
+
   function build() {
+    buffers.scream = buildScream();
+    buffers.bark = buildBark();
+    buffers.growl = buildGrowl();
+    buffers.gasp = buildGasp();
+    buffers.drips = buildDrips();
+    buffers.tv = buildTV();
     buffers.crickets = buildCrickets();
     buffers.rustle = [buildRustle(1), buildRustle(2), buildRustle(3)];
     buffers.step = [buildStep(7), buildStep(8)];
@@ -451,14 +568,14 @@ const SFX = (() => {
 
   // The lure's voice. Uses the phone's text-to-speech if it has a voice,
   // otherwise the synthesised tones. Same words, same way, every time.
-  function speakLure() {
+  function speakLure(text) {
     const synth = window.speechSynthesis;
     if (!synth || !window.SpeechSynthesisUtterance) {
       play('voice', { vol: 0.8 });
       return;
     }
     let started = false;
-    const u = new SpeechSynthesisUtterance('Grandpa. Come see.');
+    const u = new SpeechSynthesisUtterance(text);
     u.lang = 'en-US';
     u.pitch = 1.5;
     u.rate = 0.8;

@@ -25,6 +25,20 @@ class UIScene extends Phaser.Scene {
     this.buttons = [this.actGfx, this.actLabel, this.lampGfx, this.lampLabel];
     if (!this.touch) this.buttons.forEach(b => b.setVisible(false));
 
+    // Cricket icon (top left): fades with the crickets, for players who
+    // can't hear them. Lamp oil gauge next to it.
+    this.cricket = this.add.graphics({ x: 16, y: 14 });
+    this.cricket.lineStyle(1, 0xd8d2c0, 1);
+    this.cricket.fillStyle(0xd8d2c0, 1).fillEllipse(0, 0, 12, 5).fillCircle(7, -1, 2);
+    this.cricket.lineBetween(-2, 2, -6, 7).lineBetween(2, 2, 0, 7).lineBetween(-4, -1, -9, -6).lineBetween(-9, -6, -10, 1);
+    this.cricket.lineBetween(8, -2, 13, -8).lineBetween(8, -2, 14, -4);
+    this.cricket.setVisible(false);
+    this.oilLabel = this.add.text(30, 14, 'OIL', { fontFamily: 'Arial, sans-serif', fontSize: '7px', color: '#ffe0a0' }).setOrigin(0, 0.5).setVisible(false);
+    this.oilBack = this.add.rectangle(46, 14, 40, 4, 0x000000, 0.6).setOrigin(0, 0.5).setStrokeStyle(1, 0xffd27a, 0.5).setVisible(false);
+    this.oilBar = this.add.rectangle(46, 14, 40, 4, 0xffd27a, 0.9).setOrigin(0, 0.5).setVisible(false);
+    this.debugBtn = this.add.text(width - 6, 8, 'DEBUG', { fontFamily: 'Arial, sans-serif', fontSize: '8px', color: '#ff8080' })
+      .setOrigin(1, 0).setAlpha(0.6).setVisible(false);
+
     // Caption box for Henry's thoughts.
     this.captionBg = this.add.rectangle(width / 2, 22, 300, 26, 0x000000, 0.75).setStrokeStyle(1, 0x8a8478, 0.6).setVisible(false);
     this.captionText = this.add.text(width / 2, 22, '', {
@@ -55,6 +69,10 @@ class UIScene extends Phaser.Scene {
 
   onDown(p) {
     const { width } = this.scale;
+    if (Controls.showDebugButton && p.x > width - 60 && p.y < 26) {
+      Controls.debugPressed = true;
+      return;
+    }
     if (p.x < width / 2) {
       if (this.joy.id === null) {
         this.joy = { id: p.id, bx: p.x, by: p.y };
@@ -71,6 +89,7 @@ class UIScene extends Phaser.Scene {
     } else if (near(this.actBtn, 16) || p.y > this.lampBtn.y + this.lampBtn.r) {
       // generous: any press in the lower right counts as ACT
       Controls.actPressed = true;
+      Controls.actHeld = true;
       this.actBtn.id = p.id;
       this.actGfx.setFillStyle(0xffffff, 0.35);
     }
@@ -104,11 +123,22 @@ class UIScene extends Phaser.Scene {
       Controls.moveX = Controls.moveY = 0;
       Controls.run = false;
     }
-    if (p.id === this.actBtn.id) { this.actBtn.id = null; this.actGfx.setFillStyle(0xffffff, 0.1); }
+    if (p.id === this.actBtn.id) { this.actBtn.id = null; Controls.actHeld = false; this.actGfx.setFillStyle(0xffffff, 0.1); }
     if (p.id === this.lampBtn.id) { this.lampBtn.id = null; this.lampGfx.setFillStyle(0xffd27a, 0.1); }
   }
 
   update(time) {
+    const c = Controls.crickets;
+    this.cricket.setVisible(c !== null);
+    if (c !== null) this.cricket.setAlpha(0.12 + 0.75 * Phaser.Math.Clamp(c, 0, 1));
+    const oil = Controls.oil;
+    [this.oilLabel, this.oilBack, this.oilBar].forEach(o => o.setVisible(oil !== null));
+    if (oil !== null) {
+      this.oilBar.width = 40 * Phaser.Math.Clamp(oil, 0, 1);
+      this.oilBar.setFillStyle(oil < 0.2 ? 0xd05030 : 0xffd27a, 0.9);
+    }
+    this.debugBtn.setVisible(Controls.showDebugButton);
+
     // ACT glows when there is something to use.
     if (this.touch && this.actGfx.visible) {
       const a = Controls.actAvailable ? 0.6 + 0.35 * Math.sin(time / 180) : 0.4;

@@ -14,5 +14,5 @@ const game = new Phaser.Game({
     height: 270,
   },
   input: { activePointers: 4 },
-  scene: [StartScene, PrologueScene, UIScene, EndScene],
+  scene: [StartScene, PrologueScene, TestNightScene, UIScene, EndScene],
 });
