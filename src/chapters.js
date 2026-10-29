@@ -219,7 +219,9 @@ const CHAPTERS = {
         for (const id of toLock) {
           if (c.locks.has(id)) continue;
           const o = OPENINGS[id];
-          c.waitAct(o.tile[0] * T + 8, o.tile[1] * T + 8, 26).then(() => {
+          // doors lock from the inside (stand there); windows from the window itself
+          const at = o.door ? [o.stand[0] * T + 8, o.stand[1] * T + 8, 14] : [o.tile[0] * T + 8, o.tile[1] * T + 8, 26];
+          c.waitAct(...at).then(() => {
             c.lock(id);
             c.objective('lock', `Lock the windows and the front door (${count()}/5).`);
             c.say(`Locked ${o.name}.`, 1500);
@@ -256,7 +258,7 @@ const CHAPTERS = {
       async (c) => {
         c.cast({ walter: [21, 20] });
         c.powerOn = true;
-        await c.waitAct(24 * T + 8, 11 * T + 8, 20);
+        await c.waitAct(24 * T + 8, 11 * T + 8, 14);
         c.lock('backDoor');
         c.say('Locked the back door.', 1500);
         c.complete('back');

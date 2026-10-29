@@ -229,6 +229,11 @@ class ChapterScene extends FieldScene {
   }
 
   lock(id) {
+    const o = OPENINGS[id];
+    // Don't shut Michael inside the door: if he's in the doorway, step him inside.
+    if (o.door && Math.floor(this.hx / T) === o.tile[0] && Math.floor((this.hy + 5) / T) === o.tile[1]) {
+      this.placeMichael(o.stand[0], o.stand[1], this.fx, this.fy);
+    }
     this.locks.add(id);
     const S = SaveGame.state;
     S.flags.locks = S.flags.locks || {};

@@ -212,7 +212,9 @@ class FieldScene extends Phaser.Scene {
     const nx = this.hx + dx, ny = this.hy + dy;
     const blocked = (x, y) => this.isBlocked(x, y);
     // the player's feet: a small box below his centre
-    if (blocked(nx - 4, ny) || blocked(nx + 4, ny) || blocked(nx - 4, ny + 5) || blocked(nx + 4, ny + 5)) return;
+    const hits = (x, y) => blocked(x - 4, y) || blocked(x + 4, y) || blocked(x - 4, y + 5) || blocked(x + 4, y + 5);
+    // (if he's somehow ended up inside something solid, let him walk out of it)
+    if (hits(nx, ny) && !hits(this.hx, this.hy)) return;
     this.hx = nx; this.hy = ny;
   }
 
