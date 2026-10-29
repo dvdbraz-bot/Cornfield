@@ -98,6 +98,7 @@ class ChapterScene extends FieldScene {
   waitFor(fn) { return new Promise(res => this.waiters.push({ fn, res })); }
 
   inRoom(name) {
+    if (this.endless) return name === 'field';
     const [x0, y0, x1, y1] = ROOMS[name];
     const tx = this.hx / T, ty = this.hy / T;
     return tx >= x0 && tx < x1 + 1 && ty >= y0 && ty < y1 + 1;
@@ -163,6 +164,55 @@ class ChapterScene extends FieldScene {
   hasItem(id) { return SaveGame.state.items.includes(id); }
   flag(k, v = true) { SaveGame.state.flags[k] = v; }
   has(k) { return !!SaveGame.state.flags[k]; }
+
+  // Duck under police tape across a doorway: from (tx, ty) to the other side.
+  async duckUnder(fromTy, toTy, tx) {
+    this.frozen = true;
+    this.tweens.add({ targets: this.playerBody, scaleY: 0.55, y: 3, duration: 200 });
+    await this.wait(250);
+    const to = tileCentre(tx, toTy);
+    this.tweens.add({ targets: this, hx: to.x, hy: to.y, duration: 700 });
+    await this.wait(750);
+    this.tweens.add({ targets: this.playerBody, scaleY: 1, y: 1, duration: 200 });
+    await this.wait(200);
+    this.frozen = this.cutscene;
+  }
+
+  // Night 2: the field closes around him and never ends.
+  enterEndless() {
+    const m = ENDLESS_MAP;
+    if (!this.textures.exists('mapBase-endless')) {
+      const { base, top } = m.paint();
+      this.textures.addCanvas('mapBase-endless', base);
+      this.textures.addCanvas('mapTop-endless', top);
+    }
+    // Hide everything that belongs to the farm.
+    const keep = new Set([this.player, this.markerGfx, this.actMarker]);
+    this.hiddenFarm = this.children.list.filter(o => o.visible && !keep.has(o) && o.depth < 1000);
+    this.hiddenFarm.forEach(o => o.setVisible(false));
+    this.add.image(0, 0, 'mapBase-endless').setOrigin(0).setDepth(0);
+    this.add.image(0, 0, 'mapTop-endless').setOrigin(0).setDepth(20);
+    this.map = m;
+    this.endless = true;
+    this.interactables = [];
+    const c = tileCentre(m.CENTRE.tx, m.CENTRE.ty);
+    const dx = c.x - this.hx, dy = c.y - this.hy;
+    this.hx = c.x; this.hy = c.y;
+    if (this.creature) { this.creature.x += dx; this.creature.y += dy; this.creature.warned = true; }
+  }
+
+  // Keep Jason near the middle of the endless field: when he strays, move him
+  // and everything around him back by exactly one repeat of the pattern.
+  wrapEndless() {
+    const W = this.map.WRAP, C = this.map.CENTRE;
+    let dx = 0, dy = 0;
+    const tx = this.hx / T, ty = this.hy / T;
+    if (tx > C.tx + W.keepX) dx = -W.x; else if (tx < C.tx - W.keepX) dx = W.x;
+    if (ty > C.ty + W.keepY) dy = -W.y; else if (ty < C.ty - W.keepY) dy = W.y;
+    if (!dx && !dy) return;
+    this.hx += dx * T; this.hy += dy * T;
+    if (this.creature) { this.creature.x += dx * T; this.creature.y += dy * T; this.creature.lastX = this.creature.x; this.creature.lastY = this.creature.y; }
+  }
 
   // Spike, at the edge of the clearing. Mostly left to the imagination.
   showDeadSpike() {
@@ -374,6 +424,11 @@ class ChapterScene extends FieldScene {
 
   lighting() {
     const lights = [];
+    if (this.endless) {
+      // The house light, far off to the west. It never gets any closer.
+      lights.push({ x: this.hx - 13 * T, y: this.hy - 2 * T, r: 9 });
+      return { ambient: 0.96, tint: [3, 5, 14], lights };
+    }
     if (this.inRoom('attic')) return { ambient: 0.85, tint: [3, 5, 14], lights };
     // By day the corn hides anything more than a few tiles away.
     if (!this.night && this.inRoom('field')) return { ambient: 0.72, tint: [40, 42, 16], lights, radius: 3.5 * T };
@@ -417,6 +472,13 @@ class ChapterScene extends FieldScene {
     }
     if (this.creature) this.drawCreature(time);
 
+    if (this.endless) {
+      this.wrapEndless();
+      // the house light, far off to the west, that never gets any closer
+      if (!this.houseGlow) this.houseGlow = this.add.circle(0, 0, 2.5, 0xffd890).setDepth(1001);
+      this.houseGlow.setPosition(Math.round(this.hx - 13 * T), Math.round(this.hy - 2 * T)).setAlpha(0.55 + 0.25 * Math.sin(time / 300));
+      if (this.flickerTorch) this.lanternOn = Math.random() > 0.12; // the torch is failing
+    }
     this.waiters = this.waiters.filter(w => { if (w.fn()) { w.res(); return false; } return true; });
     this.updateCamera();
     this.updateInteract();

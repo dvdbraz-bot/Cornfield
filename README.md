@@ -92,7 +92,7 @@ Milestone 3 (placeholder art and sound) is on hold. The plan is to get the whole
 ## Milestone 5 (in progress): Days 1-3
 Day 1 and Night 1 are above. Added in this build:
 
-**The Jacobs farm**, on the far side of the field, reached by the long road round (Pa's rule keeps Michael out of the corn by day). Ruth Hale sits on the porch. The front door is crossed with police tape, and the Snakes and Ladders board is still laid out.
+**The Jacobs farm**, on the far side of the field, reached by the long road round (Pa's rule keeps Michael out of the corn by day). Ruth Hale sits on the porch and leaves after talking to Michael. The front door is crossed with police tape: Michael can't walk through it, but once Ruth has gone he can duck under it (ACT). Inside, the Snakes and Ladders board is still laid out.
 
 **Day 2: Spike**
 1. Breakfast. Detective Anna Venn arrives in a police car and interviews the family in the living room. She sees the first line on Michael's laptop: "Mr Jacobs. Already?" (with a choice). "Don't leave Marrowfield, Mr Cole."
@@ -104,9 +104,17 @@ Day 1 and Night 1 are above. Added in this build:
    - Jenny: "Who did this?"
 4. Evening: they bury him by his kennel. "May he rest in peace." *More like rest in pieces, Michael thinks, and hates himself for thinking it.*
 
-**Night 2: Jason** (played as Jason; the notebook is Michael's, so it's hidden)
-- Spike barks from one spot at the edge of the corn, the same bark every 6 seconds. Spike was buried this evening.
-- In the corn the barking stops, the crickets stop, "Which way was the house?", a rustle behind him... and the hand.
+**Night 2: Jason** (played as Jason; the notebook is Michael's, so it's hidden). About 2-3 minutes.
+1. Spike barks from one spot at the edge of the corn, the same bark every 6 seconds. Spike was buried this evening.
+2. When Jason reaches the spot it goes quiet, then calls again from a new spot further in. It does this three times, drawing him towards the centre. Each call comes from one spot that never moves.
+3. Near the centre: silence, the crickets stop. "Which way was the house?"
+4. **The endless cornfield:** the field changes to corn that never ends (`ENDLESS_MAP`).
+   - It repeats seamlessly. When Jason strays from the middle, the game quietly moves him, and anything near him, back by one repeat.
+   - A faint house light glows at the edge of the screen and never gets closer.
+   - Something keeps pace just beyond his torch, rustling, and his heartbeat builds the whole time.
+   - His thoughts: "This row should end soon." / "It's right behind me." / "It doesn't end."
+   - Spike's bark comes once more from right behind him, and his torch starts to fail.
+5. About a minute in, it closes in, and then the hand.
 
 The next chapter is Day 3.
 

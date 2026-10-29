@@ -455,5 +455,6 @@ class Stalker {
       this.rustleTimer = inField ? 1.8 + Math.random() * 2.5 : 5 + Math.random() * 6;
     }
     this.heartScale = (this.hush || this.leaning > 0) ? 1 : (inField ? 0.45 : 0.2);
+    if (s.dread !== undefined) this.heartScale = s.dread; // a scripted build-up (Night 2)
   }
 }

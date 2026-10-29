@@ -283,7 +283,16 @@ const CHAPTERS = {
       c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
       if (!c.has('spikeDead')) c.cast({ spike: [27, 14] });
       // Things to look at in the Jacobs farmhouse.
-      c.look(85, 9, 'Police tape across the door. He ducks under it.', 20, 2500);
+      // The taped front door: you can't walk through it. Duck under the tape (ACT),
+      // but not while Ruth is watching.
+      const tape = async (fromTy, toTy) => {
+        if (c.npcs.ruth) { c.say('Not with Mrs Hale watching.', 2500); return; }
+        await c.duckUnder(fromTy, toTy, 85);
+      };
+      c.interactables.push(
+        { x: 85 * T + 8, y: 8 * T + 8, r: 20, when: () => c.hy < 9 * T, act: () => tape(8, 10) },
+        { x: 85 * T + 8, y: 10 * T + 8, r: 20, when: () => c.hy > 9 * T, act: () => tape(10, 8) },
+      );
       c.look(83, 11, 'A clean square in the dust on the counter, where something used to sit.', 22);
       c.look(90, 12, "Henry's armchair, facing the TV.", 22, 2500);
     },
@@ -359,12 +368,14 @@ const CHAPTERS = {
         ]);
         await c.talk([
           ['RUTH HALE', 'Ask your father.'],
-          [null, 'She looks back at the corn and says nothing more.'],
+          [null, 'She stands, takes her bag, and walks off down the track without looking back.'],
         ]);
+        await c.walkNPC('ruth', [[86, 6], [86, 3], [90, 2]], 35);
+        c.walkNPC('ruth', [[98, 2]], 35).then(() => c.cast({ ruth: null }));
         c.setCutscene(false);
         c.complete('jacobs');
         c.clue('ruth', 'Ruth Hale', "Henry Jacobs' housekeeper. \"Those old men used to go in there at night. Years ago. I saw the lanterns.\" She said to ask Pa.");
-        c.objective('inside', 'Look inside the Jacobs farmhouse.');
+        c.objective('inside', 'Look inside the Jacobs farmhouse. (Duck under the tape: ACT at the door.)');
         await c.waitAct(83 * T + 8, 14 * T + 16, 30);
         await c.talk([
           [null, 'The Snakes and Ladders board is still laid out on the kitchen table, the counters where the boys left them.'],
@@ -376,7 +387,7 @@ const CHAPTERS = {
 
       // Spike bolts into the corn. Follow him.
       async (c) => {
-        c.cast({ ruth: [86, 8], walter: [8, 11] });
+        c.cast({ ruth: null, walter: [8, 11] });
         await c.waitFor(() => c.hx < 31 * T && c.hy > 3 * T && c.hy < 26 * T);
         c.setCutscene(true);
         c.cast({ spike: [27, 14], jenny: [24, 11] });
@@ -458,8 +469,10 @@ const CHAPTERS = {
   },
 
   // ---------------- Night 2: Jason ----------------
-  // A short, doomed scene. Spike barks under the window, from one spot that
-  // never moves. Spike is dead.
+  // A short, doomed scene. Spike barks from one spot that never moves (Spike
+  // is dead). Each time Jason reaches the spot it goes quiet, then calls again
+  // from further in, drawing him towards the centre. There, he loses his way,
+  // and the field never ends.
   night2: {
     night: true,
     player: 'jason',
@@ -473,6 +486,7 @@ const CHAPTERS = {
       c.cast({ walter: [21, 21], jenny: [13, 22], michael: [6, 22], jean: [11, 12] });
       c.flag('cornAtNight'); // no "Pa said" reminder: this is Jason
       c.powerOn = false;     // everyone's asleep
+      c.creature.warned = true; // no "get out of the corn" warning tonight
     },
     steps: [
       async (c) => {
@@ -480,13 +494,8 @@ const CHAPTERS = {
         c.placeMichael(7, 11, 0, -1);
         await c.wait(800);
         await c.talk([[null, 'Night 2. Jason lies awake on the couch, staring at the ceiling.']]);
-        const spot = { x: 34 * T + 8, y: 12 * T + 8 }; // at the edge of the corn, by the porch
-        c.lureSpot = spot;
-        const call = () => {
-          SFX.play('bark', { vol: 0.6 * Phaser.Math.Clamp(1 - Phaser.Math.Distance.Between(c.hx, c.hy, spot.x, spot.y) / (30 * T), 0.25, 1), pan: c.panTo(spot.x) });
-          c.bubble(spot.x, spot.y - 4, '(barking)', 2500, null, true);
-        };
-        call();
+        SFX.play('bark', { vol: 0.35, pan: 0.6 });
+        c.bubble(34 * T + 8, 12 * T + 4, '(barking)', 2500, null, true);
         await c.wait(1500);
         await c.talk([
           ['JASON', 'Spike?'],
@@ -495,22 +504,70 @@ const CHAPTERS = {
         ]);
         c.setCutscene(false);
         c.say('Jason pulls on a shirt and picks up his torch.', 3000);
-        // The same bark, from the same spot, every time.
-        c.barking = c.time.addEvent({ delay: 6000, loop: true, callback: call });
       },
 
-      // Into the corn. He is lost. The crickets stop.
+      // The bark leads him in, one fixed spot at a time.
       async (c) => {
-        await c.waitFor(() => c.inRoom('field') && c.hx > 35 * T);
-        if (c.barking) c.barking.remove();
-        c.creature.hushFor(60);
-        c.say('The barking has stopped.', 2500);
-        await c.wait(3000);
-        c.say('Which way was the house?', 2500);
-        c.creature.rustle(0.8);
-        await c.wait(3500);
+        const spots = [[34, 12], [39, 15], [44, 18]].map(([x, y]) => tileCentre(x, y));
+        for (const spot of spots) {
+          const call = () => {
+            const d = Phaser.Math.Distance.Between(c.hx, c.hy, spot.x, spot.y);
+            SFX.play('bark', { vol: 0.6 * Phaser.Math.Clamp(1 - d / (30 * T), 0.25, 1), pan: c.panTo(spot.x) });
+            c.bubble(spot.x, spot.y - 4, '(barking)', 2500, null, true);
+          };
+          call();
+          const ev = c.time.addEvent({ delay: 6000, loop: true, callback: call }); // the same bark, the same spot
+          await c.waitFor(() => c.near(spot.x, spot.y, 2.5 * T));
+          ev.remove();
+          await c.wait(2500); // silence... then again, further in
+        }
+      },
+
+      // Near the centre: everything stops. He's lost.
+      async (c) => {
+        c.creature.hushFor(9999);
+        c.setCutscene(true);
+        await c.wait(1500);
+        await c.talk([
+          ['JASON', 'Spike?'],
+          [null, 'The crickets have stopped.'],
+          ['JASON', 'Which way was the house?'],
+        ]);
+        await c.fadeOut(400);
+        c.enterEndless();
+        await c.fadeIn(600);
+        c.setCutscene(false);
+        c.say('Get back to the house.', 3000);
+      },
+
+      // The endless field. Something keeps pace with him.
+      async (c) => {
+        if (!c.endless) { c.creature.hushFor(9999); c.enterEndless(); }
+        const cr = c.creature;
+        // His heartbeat builds the whole way through.
+        c.dread = 0.25;
+        c.tweens.add({ targets: c, dread: 1, duration: 52000 });
+        const beats = [
+          [9000, () => c.say('This row should end soon.', 3000)],
+          [9000, () => { cr.rustle(0.7); c.say("It's right behind me.", 2500); }],
+          [10000, () => c.say("It doesn't end.", 3000)],
+          [8000, () => {
+            // The bark again, from right behind him. It never moves.
+            const bx = c.hx - c.fx * 3 * T, by = c.hy - c.fy * 3 * T;
+            SFX.play('bark', { vol: 0.7, pan: c.panTo(bx) });
+            c.bubble(bx, by, '(barking)', 2000, null, true);
+          }],
+          [8000, () => { c.flickerTorch = true; c.say('The torch flickers.', 2500); }],
+          [7000, () => { cr.leaning = 999; }], // it closes in, and stays close
+        ];
+        for (const [ms, fn] of beats) {
+          await c.wait(ms);
+          fn();
+        }
+        await c.wait(5000);
         c.state = 'caught';
         c.setCutscene(true);
+        c.flickerTorch = false;
         await c.killFromBehind();
         await c.endChapter('day3');
       },

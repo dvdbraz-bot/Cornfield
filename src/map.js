@@ -12,9 +12,9 @@
 //   'Q' concrete             'G' generator      'n' dog kennel     'x' boxes
 //   'J' a doorway crossed with police tape
 const TILE = 16;
-const BLOCKED_TILES = new Set([' ', '#', 'c', 't', 'b', 'h', 's', 'v', 'X', 'w', 'K', 'W', 'e', 'a', 'G', 'n', 'x']);
+const BLOCKED_TILES = new Set([' ', '#', 'c', 't', 'b', 'h', 's', 'v', 'X', 'w', 'K', 'W', 'e', 'a', 'G', 'n', 'x', 'J']);
 
-function buildMap({ key, W, H, build, wet }) {
+function buildMap({ key, W, H, build, wet, periodic }) {
   const grid = [];
   for (let y = 0; y < H; y++) grid.push(new Array(W).fill(' '));
   const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) grid[y][x] = c; };
@@ -24,11 +24,11 @@ function buildMap({ key, W, H, build, wet }) {
 
   // A cornfield: two-tile-wide rows of corn running north-south with a
   // one-tile path between each row.
-  const cornfield = (x0, y0, x1, y1) => {
+  const cornfield = (x0, y0, x1, y1, untrampled) => {
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
         const isPath = (x - x0) % 3 === 2;
-        set(x, y, isPath ? 'p' : (rnd() < 0.04 ? 'T' : 'C'));
+        set(x, y, isPath ? 'p' : (!untrampled && rnd() < 0.04 ? 'T' : 'C'));
       }
     }
   };
@@ -65,6 +65,9 @@ function buildMap({ key, W, H, build, wet }) {
       for (let tx = 0; tx < W; tx++) {
         const c = grid[ty][tx];
         const x = tx * TILE, y = ty * TILE;
+        // A periodic map repeats exactly every 6 tiles across and 4 down, so
+        // the game can quietly move you back without you seeing a seam.
+        if (periodic) s = 1 + (tx % 6) * 977 + (ty % 4) * 131;
         switch (c) {
           case ' ': rect(g, x, y, TILE, TILE, '#050608'); break;
           case '#': rect(g, x, y, TILE, TILE, '#4a4038'); rect(g, x, y + 12, TILE, 4, '#2e2823'); break;
@@ -359,6 +362,23 @@ const FARM_MAP = buildMap({
         g.fillStyle = '#5a4028'; g.beginPath(); g.arc(11 * TILE + 8, 52 * TILE + 8, 9, 0, Math.PI * 2); g.fill();
         rect(g, 11 * TILE + 1, 52 * TILE + 6, 14, 2, '#3a2a18');
       },
+    };
+  },
+});
+
+// ---------- Night 2: the endless cornfield ----------
+// Corn and paths and nothing else, painted so it repeats seamlessly. Once
+// Jason is in here, the game keeps moving him (and everything near him) back
+// towards the middle. However far he runs, the field never ends.
+const ENDLESS_MAP = buildMap({
+  key: 'endless', W: 60, H: 44, wet: false, periodic: true,
+  build({ cornfield, W, H }) {
+    cornfield(0, 0, W - 1, H - 1, true);
+    return {
+      FIELD: { x0: 1, y0: 1, x1: W - 2, y1: H - 2 },
+      RING: { x: 30 * TILE + 8, y: 22 * TILE + 8 },
+      CENTRE: { tx: 29, ty: 22 },   // a path column (paths are every third column from x = 2)
+      WRAP: { x: 12, y: 8, keepX: 6, keepY: 4 }, // shift by 12 / 8 tiles when 6 / 4 tiles from the middle
     };
   },
 });

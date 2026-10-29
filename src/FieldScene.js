@@ -43,8 +43,10 @@ class FieldScene extends Phaser.Scene {
       this.textures.addCanvas(baseKey, base);
       this.textures.addCanvas(topKey, top);
     }
-    this.add.image(0, 0, baseKey).setOrigin(0).setDepth(0);
-    this.add.image(0, 0, topKey).setOrigin(0).setDepth(20);
+    this.mapImages = [
+      this.add.image(0, 0, baseKey).setOrigin(0).setDepth(0),
+      this.add.image(0, 0, topKey).setOrigin(0).setDepth(20),
+    ];
 
     this.hx = start.x; this.hy = start.y;
     this.fx = 0; this.fy = 1; // facing
