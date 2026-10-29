@@ -37,8 +37,10 @@ class ChapterScene extends FieldScene {
     this.ch = CHAPTERS[S.chapter];
     this.night = !!this.ch.night;
     const start = (this.resuming && S.x != null) ? { x: S.x, y: S.y } : tileCentre(...this.ch.start);
-    this.setupField(FARM_MAP, start, MICHAEL_LOOK);
-    Controls.notebook = true;
+    // Most chapters are Michael's; a few doomed scenes are someone else's.
+    this.setupField(FARM_MAP, start, this.ch.player ? CAST[this.ch.player] : MICHAEL_LOOK);
+    this.cornAllowed = false;
+    Controls.notebook = !this.ch.player; // the notebook is Michael's
     Controls.gameScene = 'Chapter';
     Controls.lanternAvailable = this.night;
 
@@ -161,6 +163,21 @@ class ChapterScene extends FieldScene {
   hasItem(id) { return SaveGame.state.items.includes(id); }
   flag(k, v = true) { SaveGame.state.flags[k] = v; }
   has(k) { return !!SaveGame.state.flags[k]; }
+
+  // Spike, at the edge of the clearing. Mostly left to the imagination.
+  showDeadSpike() {
+    if (this.deadSpike) return;
+    const d = this.add.container(50 * T + 8, 23 * T + 8).setDepth(13);
+    d.add(this.add.ellipse(1, 2, 24, 11, 0x4a0a0a, 0.85));
+    d.add(this.add.rectangle(0, 0, 12, 6, 0xc8a060));
+    d.add(this.add.rectangle(-7, 0, 3, 2, 0xc8a060));
+    this.deadSpike = d;
+  }
+
+  // Something to look at: ACT shows a line.
+  look(tx, ty, text, r = 24, ms = 3500) {
+    this.interactables.push({ x: tx * T + 8, y: ty * T + 8, r, when: () => true, act: () => this.say(text, ms) });
+  }
 
   // Who's where: { jenny: [tx, ty], walter: null (gone) }.
   cast(spec) {
@@ -358,6 +375,8 @@ class ChapterScene extends FieldScene {
   lighting() {
     const lights = [];
     if (this.inRoom('attic')) return { ambient: 0.85, tint: [3, 5, 14], lights };
+    // By day the corn hides anything more than a few tiles away.
+    if (!this.night && this.inRoom('field')) return { ambient: 0.72, tint: [40, 42, 16], lights, radius: 3.5 * T };
     if (!this.night) return { ambient: 0, tint: [0, 0, 0], lights };
     if (this.inRoom('house')) {
       if (this.powerOn) return { ambient: 0.3, tint: [30, 16, 4], lights };
@@ -382,7 +401,7 @@ class ChapterScene extends FieldScene {
     this.movePlayer(dt);
 
     // By day, Pa's rule holds: nobody goes into the corn.
-    if (!this.night && this.inRoom('field') && !this.ch.cornAllowed) {
+    if (!this.night && this.inRoom('field') && !this.cornAllowed) {
       this.hx -= 6;
       if (!this.ruleTold || time > this.ruleTold) { this.ruleTold = time + 4000; this.say('Pa said nobody goes into the corn.', 2500); }
     }
@@ -403,6 +422,7 @@ class ChapterScene extends FieldScene {
     this.updateInteract();
     this.updateMarkers();
     const L = this.lighting();
+    this.extraLight = L.radius || 0;
     this.ambient += (L.ambient - this.ambient) * 0.1;
     this.drawDarkness(time, this.ambient, L.tint, L.lights);
     Controls.playerTile = { x: this.hx / T, y: this.hy / T };

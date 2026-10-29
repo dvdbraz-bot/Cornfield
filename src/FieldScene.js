@@ -277,7 +277,7 @@ class FieldScene extends Phaser.Scene {
   // ambient: 0..1 darkness. tint: [r,g,b] of the dark. lights: extra
   // [{x, y, r}] holes in world pixels (lamps, a TV).
   drawDarkness(time, ambient, tint, lights = []) {
-    const wantR = Math.max(this.minLight, this.lanternOn ? FIELD_TUNING.lanternOnRadius : FIELD_TUNING.lanternOffRadius);
+    const wantR = Math.max(this.minLight, this.extraLight || 0, this.lanternOn ? FIELD_TUNING.lanternOnRadius : FIELD_TUNING.lanternOffRadius);
     this.lightRadius += (wantR - this.lightRadius) * 0.25;
     const flicker = 1 + 0.025 * Math.sin(time / 90) + 0.015 * Math.sin(time / 37);
     const r = this.lightRadius * flicker;

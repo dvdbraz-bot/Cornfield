@@ -235,11 +235,13 @@ class UIScene extends Phaser.Scene {
   }
 
   drawMapSketch(p) {
-    const m = FARM_MAP, s = 3.6, ox = 40, oy = 44;
+    const m = FARM_MAP, s = 3.9, ox = 34, oy = 44;
     const g = this.add.graphics();
     const R = (x0, y0, x1, y1, col, a = 1) => g.fillStyle(col, a).fillRect(ox + x0 * s, oy + y0 * s, (x1 - x0 + 1) * s, (y1 - y0 + 1) * s);
     g.lineStyle(1, 0x2a2a40, 1);
-    R(1, 1, 76, 2, 0x8a7a5a, 0.6);                   // road
+    R(1, 1, 98, 2, 0x8a7a5a, 0.6);                   // road
+    R(85, 3, 86, 7, 0x8a7a5a, 0.6);
+    g.strokeRect(ox + 80 * s, oy + 9 * s, 14 * s, 13 * s); // the Jacobs farm
     R(3, 7, 25, 25, 0x2a2a40, 0.15); g.strokeRect(ox + 3 * s, oy + 7 * s, 23 * s, 19 * s);
     R(26, 9, 27, 23, 0x8a7a5a, 0.4);                 // porch
     g.strokeRect(ox + 3 * s, oy + 29 * s, 9 * s, 7 * s);   // garage
@@ -257,6 +259,7 @@ class UIScene extends Phaser.Scene {
     p.add(g);
     const lab = (x, y, t) => p.add(this.add.text(ox + x * s, oy + y * s, t, { fontFamily: 'Georgia, serif', fontSize: '8px', color: '#2a2a40' }).setOrigin(0.5));
     lab(30, 0.2, 'road to Marrowfield');
+    lab(87, 24, 'Jacobs farm');
     lab(14, 16, 'house'); lab(7, 37, 'garage'); lab(17, 35, 'shed'); lab(52.5, 31, 'stone ring'); lab(53, 6.3, 'the cornfield');
     if (Controls.playerTile) {
       const { x, y } = Controls.playerTile;

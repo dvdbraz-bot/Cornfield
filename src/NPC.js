@@ -5,6 +5,9 @@ const CAST = {
   jason:  { name: 'JASON',  body: 0x3a8a8a, head: 0xe0c0a0, hair: 0xc06a30 }, // copper curls
   jean:   { name: 'JEAN',   body: 0xd0d0e0, head: 0xe8d0c0, hair: 0x5a3a20 }, // thick brown hair
   spike:  { name: 'SPIKE',  dog: true, body: 0xc8a060 },                      // old Labrador
+  venn:   { name: 'DETECTIVE VENN', body: 0x3a3a46, head: 0xd8b898, hair: 0x2a2018 }, // dark coat
+  ruth:   { name: 'RUTH HALE', body: 0x262626, head: 0xd8c0a8, hair: 0xd8d8d8 },   // black dress, white bun
+  michael: { name: 'MICHAEL', body: 0xe8e8e0, head: 0xc89a78, hair: 0x2a1a10 },
 };
 
 class NPC {

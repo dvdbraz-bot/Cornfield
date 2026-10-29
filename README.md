@@ -89,6 +89,27 @@ Milestone 3 (placeholder art and sound) is on hold. The plan is to get the whole
    - **Too deep** (10 tiles in): everything goes silent, it crashes through the corn right behind him, and he thinks "Get out of the corn." 
 4. The generator brings the power back, then lock the back door and go to bed. The next chapter would be Day 2.
 
+## Milestone 5 (in progress): Days 1-3
+Day 1 and Night 1 are above. Added in this build:
+
+**The Jacobs farm**, on the far side of the field, reached by the long road round (Pa's rule keeps Michael out of the corn by day). Ruth Hale sits on the porch. The front door is crossed with police tape, and the Snakes and Ladders board is still laid out.
+
+**Day 2: Spike**
+1. Breakfast. Detective Anna Venn arrives in a police car and interviews the family in the living room. She sees the first line on Michael's laptop: "Mr Jacobs. Already?" (with a choice). "Don't leave Marrowfield, Mr Cole."
+2. The long road round to the Jacobs farm. Ruth: "Stay away from the cornfield, Mr Cole. Those old men used to go in there at night. Years ago. I saw the lanterns." Then look inside: the board, a three on the die, and a clean square in the dust where the carved stone used to sit.
+3. Home: Spike barks at the field and bolts. Chase him through the corn in daylight, where the stalks hide anything more than a few tiles away.
+   - His barks **move** as he runs (a real voice moves).
+   - A yelp, then nothing.
+   - He's dead at the edge of the clearing, beside the ring of twelve carved stones.
+   - Jenny: "Who did this?"
+4. Evening: they bury him by his kennel. "May he rest in peace." *More like rest in pieces, Michael thinks, and hates himself for thinking it.*
+
+**Night 2: Jason** (played as Jason; the notebook is Michael's, so it's hidden)
+- Spike barks from one spot at the edge of the corn, the same bark every 6 seconds. Spike was buried this evening.
+- In the corn the barking stops, the crickets stop, "Which way was the house?", a rustle behind him... and the hand.
+
+The next chapter is Day 3.
+
 ## Controls
 - **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it (at night). **NOTEBOOK** is at the top right. In dialogue, tap anywhere to continue, or tap a choice. To face a direction without walking far, nudge the joystick that way.
 - **Computer:** WASD or arrow keys to move, Shift to run, E or Space = act (hold it to hold your breath), F = lantern, N = notebook, G = debug view (test night). In dialogue: E / Enter to continue, 1-3 to choose. On the start screen: 0 = Continue, 1 = New game, 2 = Test night.
@@ -123,5 +144,9 @@ Milestone 3 (placeholder art and sound) is on hold. The plan is to get the whole
 - **On a computer:** double-click `index.html`.
 
 ## Next (from the design doc)
-Milestone 5: the rest of Days 1-3. That's Day 2 (Detective Venn, the Jacobs farm and Ruth, chasing Spike through the corn, the stone ring, and Jason's doomed night), then Day 3 (searching for Jason, the stone through the window, Jason's voice calling Jenny, the chase across the lawn, and Jenny's interlude).
+The rest of Milestone 5:
+- **Day 3:** searching the field for Jason and finding his torch, the crow, Jean and the engagement ring, and the stone through the kitchen window.
+- **Night 3:** Jason's voice calling Jenny and the chase across the lawn.
+- **Jenny's interlude.**
+
 Then Milestone 6 (Days 4-7, the finale and the endings), and after that the art and audio, the Android app, and Google Play.

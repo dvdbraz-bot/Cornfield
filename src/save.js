@@ -57,4 +57,6 @@ const CHAPTER_NAMES = {
   day1: 'Day 1: Homecoming',
   night1: 'Night 1: Lock up',
   day2: 'Day 2: Spike',
+  night2: 'Night 2: Jason',
+  day3: 'Day 3: Jenny, come here',
 };

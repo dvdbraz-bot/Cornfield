@@ -10,6 +10,7 @@
 //   'W' window (in a wall)   'D' front door     'B' back door      'L' attic ladder
 //   'm' green carpet         'j' rose carpet    'e' bed            'a' cupboard / wardrobe
 //   'Q' concrete             'G' generator      'n' dog kennel     'x' boxes
+//   'J' a doorway crossed with police tape
 const TILE = 16;
 const BLOCKED_TILES = new Set([' ', '#', 'c', 't', 'b', 'h', 's', 'v', 'X', 'w', 'K', 'W', 'e', 'a', 'G', 'n', 'x']);
 
@@ -113,6 +114,12 @@ function buildMap({ key, W, H, build, wet }) {
             }
             break;
           case 'W': rect(g, x, y, TILE, TILE, '#4a4038'); rect(g, x + 2, y + 3, 12, 8, '#1c2430'); rect(g, x, y + 12, TILE, 4, '#2e2823'); break;
+          case 'J':
+            rect(g, x, y, TILE, TILE, '#7a5a3c');
+            rect(g, x, y, 2, TILE, '#2e2823'); rect(g, x + 14, y, 2, TILE, '#2e2823');
+            g.strokeStyle = '#e8c820'; g.lineWidth = 2;
+            g.beginPath(); g.moveTo(x, y + 2); g.lineTo(x + 16, y + 14); g.moveTo(x + 16, y + 2); g.lineTo(x, y + 14); g.stroke();
+            break;
           case 'D': case 'B':
             // an open doorway: floorboards with a pale threshold and a door frame
             rect(g, x, y, TILE, TILE, '#7a5a3c');
@@ -249,7 +256,7 @@ const TEST_MAP = buildMap({
 // cornfield (40 x 30) with the stone ring at its centre. The attic is a room
 // on its own at the bottom of the map, reached by the ladder in the hall.
 const FARM_MAP = buildMap({
-  key: 'farm', W: 78, H: 58, wet: false,
+  key: 'farm', W: 100, H: 58, wet: false,
   build({ set, fill, cornfield, W, H }) {
     fill(0, 0, W - 1, H - 1, 'g');
     fill(0, 0, W - 1, 0, 'X');
@@ -306,6 +313,21 @@ const FARM_MAP = buildMap({
       if (Math.hypot(x - cx, y - cy) <= 3.6) set(x, y, 'R');
     }
 
+    // The Jacobs farm, on the far side of the field: the long road round.
+    fill(85, 3, 86, 7, 'p');            // the track from the road
+    fill(81, 8, 92, 8, 'P');            // the front porch (Ruth sits here)
+    fill(80, 9, 93, 21, '#');
+    fill(81, 10, 86, 20, 'k');          // kitchen
+    fill(88, 10, 92, 20, '.');          // lounge
+    fill(87, 14, 87, 15, '.');
+    set(85, 9, 'J');                    // the front door, taped off
+    fill(81, 10, 84, 10, 'c');          // counter
+    fill(82, 14, 84, 15, 't');          // the table (the board is still out)
+    set(81, 14, 'b'); set(85, 15, 'b');
+    fill(89, 10, 91, 10, 'v');          // the TV
+    set(90, 12, 'h');                   // Henry's armchair
+    fill(89, 17, 91, 17, 's');
+
     // The attic: a room on its own (no way to walk there; the ladder takes you).
     fill(1, 46, 20, 56, ' ');
     fill(3, 48, 16, 55, '#');
@@ -329,6 +351,10 @@ const FARM_MAP = buildMap({
         // Ma's photo on the sideboard.
         rect(g, 12 * TILE + 10, 8 * TILE + 3, 8, 10, '#c8b890');
         rect(g, 12 * TILE + 11, 8 * TILE + 4, 6, 7, '#6a6a7a');
+        // the Jacobs' Snakes and Ladders board, still laid out
+        rect(g, 82 * TILE + 14, 14 * TILE + 6, 20, 20, '#d8cfa0');
+        for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) if ((i + j) % 2) rect(g, 82 * TILE + 14 + i * 4, 14 * TILE + 6 + j * 4, 4, 4, '#b0a070');
+        rect(g, 83 * TILE + 12, 15 * TILE + 8, 3, 3, '#f0f0f0'); // the die
         // the barrel in the attic
         g.fillStyle = '#5a4028'; g.beginPath(); g.arc(11 * TILE + 8, 52 * TILE + 8, 9, 0, Math.PI * 2); g.fill();
         rect(g, 11 * TILE + 1, 52 * TILE + 6, 14, 2, '#3a2a18');

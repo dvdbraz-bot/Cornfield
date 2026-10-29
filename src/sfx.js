@@ -526,7 +526,21 @@ const SFX = (() => {
     });
   }
 
+  // A dog's yelp, far off in the corn.
+  function buildYelp() {
+    const rand = rng(404);
+    return makeBuffer(0.9, (L, R) => {
+      voiced(L, 0.01, 0.22, 900, 'i', 0.9, rand);
+      voiced(L, 0.2, 0.16, 650, 'a', 0.5, rand);
+      lowpass(L, 0.35);
+      R.set(L);
+      echo(L, R, [[0.16, 0.3], [0.34, 0.15]]);
+      normalize(L, R, 0.8);
+    });
+  }
+
   function build() {
+    buffers.yelp = buildYelp();
     buffers.engine = buildEngine();
     buffers.horn = buildHorn();
     buffers.generator = buildGenerator();
