@@ -234,8 +234,8 @@ const CHAPTERS = {
       // The generator. Spike growls at the corn. Once, briefly, the crickets stop.
       async (c) => {
         c.cast({ walter: [21, 20] });
-        c.objective('gen', 'Check the generator in the shed.');
-        c.time.delayedCall(2000, () => c.say('Out the back door. Take the lantern.', 3000));
+        c.objective('gen', 'Check the generator in the shed. Out the back door in the kitchen, then across the yard.');
+        c.time.delayedCall(2000, () => c.say("Out the back door (the kitchen's right-hand wall, onto the porch), then across the yard to the shed.", 5000));
         c.waitFor(() => c.inRoom('porch') || c.inRoom('yard')).then(() => {
           SFX.play('growl', { vol: 0.45, rate: 1.9 });
           c.say('Spike growls at the corn, low and steady.', 3000);

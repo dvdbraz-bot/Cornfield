@@ -250,6 +250,8 @@ class ChapterScene extends FieldScene {
       const locked = this.locks.has(id);
       if (o.door) {
         if (locked) { g.fillStyle(0x6a4628, 1).fillRect(x, y, T, T); g.fillStyle(0xc8b060, 1).fillRect(x + 7, y + 6, 2, 4); }
+        else if (o.tile[1] === 7) { g.fillStyle(0x8a5a30, 1).fillRect(x - 1, y - 13, 3, 13); } // front door, swung open onto the step
+        else { g.fillStyle(0x8a5a30, 1).fillRect(x + T, y - 1, 13, 3); }                     // back door, swung open onto the porch
       } else {
         // open windows show the night through them; locked ones have their latch down and curtains drawn
         g.fillStyle(locked ? 0x5a3030 : 0x0a1018, 1).fillRect(x + 2, y + 3, 12, 8);
@@ -356,7 +358,10 @@ class ChapterScene extends FieldScene {
     if (this.inRoom('attic')) return { ambient: 0.85, tint: [3, 5, 14], lights };
     if (!this.night) return { ambient: 0, tint: [0, 0, 0], lights };
     if (this.inRoom('house')) {
-      return this.powerOn ? { ambient: 0.3, tint: [30, 16, 4], lights } : { ambient: 0.82, tint: [3, 5, 14], lights };
+      if (this.powerOn) return { ambient: 0.3, tint: [30, 16, 4], lights };
+      // moonlight through the open back door, so you can find it in the dark
+      if (!this.locks.has('backDoor')) lights.push({ x: 25 * T + 4, y: 11 * T + 8, r: 22 });
+      return { ambient: 0.82, tint: [3, 5, 14], lights };
     }
     // From outside, the lit windows glow.
     if (this.powerOn) {

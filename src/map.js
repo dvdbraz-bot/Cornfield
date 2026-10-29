@@ -113,7 +113,12 @@ function buildMap({ key, W, H, build, wet }) {
             }
             break;
           case 'W': rect(g, x, y, TILE, TILE, '#4a4038'); rect(g, x + 2, y + 3, 12, 8, '#1c2430'); rect(g, x, y + 12, TILE, 4, '#2e2823'); break;
-          case 'D': case 'B': rect(g, x, y, TILE, TILE, '#3a3530'); break;
+          case 'D': case 'B':
+            // an open doorway: floorboards with a pale threshold and a door frame
+            rect(g, x, y, TILE, TILE, '#7a5a3c');
+            if (c === 'D') { rect(g, x, y, 2, TILE, '#2e2823'); rect(g, x + 14, y, 2, TILE, '#2e2823'); rect(g, x + 2, y + 1, 12, 2, '#b8a888'); }
+            else { rect(g, x, y, TILE, 2, '#2e2823'); rect(g, x, y + 14, TILE, 2, '#2e2823'); rect(g, x + 13, y + 2, 2, 12, '#b8a888'); }
+            break;
           case 'L':
             rect(g, x, y, TILE, TILE, '#6b4f35');
             rect(g, x + 3, y, 2, TILE, '#a08060'); rect(g, x + 11, y, 2, TILE, '#a08060');
