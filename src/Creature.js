@@ -340,3 +340,120 @@ class Creature {
     this.setState('asleep');
   }
 }
+
+// Night 1: it is there, but it is not shown, and it does not attack.
+// Outside the corn it paces the edge of the field nearest Michael. In the
+// corn it keeps pace with him just beyond his lantern light, behind him and
+// to one side, rustling as it moves. Now and then it edges in until the
+// stalks move at the rim of the light. It backs off if he walks at it. Go too
+// deep and it lets him know: everything goes silent and it crashes through
+// the corn right behind him. That's all. Not yet.
+const STALKER = {
+  keepLitTiles: 5.8,      // how far it keeps from a lit lantern (the light reaches 5)
+  keepDarkTiles: 3.2,     // lantern off: it comes closer
+  leanInTiles: 4.4,       // edging in: the stalks move at the rim of the light
+  minTiles: 2.6,          // walk at it and it backs away to at least this
+  speed: 48,
+  edgeSpeed: 30,
+  deepTiles: 10,          // this far into the corn and it warns him off
+};
+
+class Stalker {
+  constructor(scene, x, y) {
+    this.s = scene;
+    this.x = x; this.y = y;
+    this.state = 'stalk';
+    this.invisible = true;
+    this.hush = false;        // forces the crickets silent
+    this.heartScale = 0.35;   // keeps Michael's heartbeat low unless it edges in
+    this.lureCooldown = Infinity;
+    this.side = Math.random() < 0.5 ? -1 : 1;
+    this.rustleTimer = 3;
+    this.leanTimer = 8;
+    this.leaning = 0;
+    this.warned = false;
+    this.lastX = x; this.lastY = y;
+  }
+
+  distToPlayer() { return Phaser.Math.Distance.Between(this.x, this.y, this.s.hx, this.s.hy); }
+  setState(st) { this.state = st; }
+  hearNoise() { this.rustleTimer = Math.min(this.rustleTimer, 0.6); } // it answers your noise
+
+  // Crossing the yard: it comes to the edge of the corn, and the crickets stop for a while.
+  yardMoment() {
+    const F = this.s.map.FIELD;
+    this.x = (F.x0 + 1) * T;
+    this.y = Phaser.Math.Clamp(this.s.hy, (F.y0 + 1) * T, F.y1 * T);
+    this.hushFor(5);
+    this.rustle(1);
+  }
+
+  hushFor(seconds) {
+    this.hush = true;
+    this.s.time.delayedCall(seconds * 1000, () => { this.hush = false; });
+  }
+
+  rustle(loud = 0) {
+    const d = this.distToPlayer();
+    const vol = Math.max(loud, 0.5 * Phaser.Math.Clamp(1 - d / (16 * T), 0, 1));
+    if (vol <= 0.02) return;
+    SFX.play('rustle', { vol, pan: this.s.panTo(this.x), rate: 0.75 + Math.random() * 0.15 });
+    this.s.swayCorn(this.x, this.y);
+  }
+
+  update(dt) {
+    const s = this.s, F = s.map.FIELD;
+    const inField = s.inRoom('field');
+    let tx, ty, speed = STALKER.speed;
+    this.leaning = Math.max(0, this.leaning - dt);
+
+    if (inField) {
+      // Too deep: a warning.
+      if (!this.warned && s.hx > (F.x0 + STALKER.deepTiles) * T) {
+        this.warned = true;
+        const a = Math.atan2(-s.fy, -s.fx);
+        this.x = s.hx + Math.cos(a) * 2.2 * T; this.y = s.hy + Math.sin(a) * 2.2 * T;
+        this.hushFor(7);
+        this.leaning = 4;
+        this.rustle(1);
+        SFX.vibrate(120);
+        s.time.delayedCall(900, () => s.say('Get out of the corn.', 3000));
+      }
+      this.leanTimer -= dt;
+      if (this.leanTimer <= 0) { this.leaning = 1.6; this.leanTimer = 8 + Math.random() * 7; this.side = -this.side; }
+      let keep = (s.lanternOn ? STALKER.keepLitTiles : STALKER.keepDarkTiles) * T;
+      if (this.leaning > 0) keep = Math.min(keep, STALKER.leanInTiles * T);
+      const a = Math.atan2(-s.fy, -s.fx) + this.side * 1.1; // behind him, to one side
+      tx = s.hx + Math.cos(a) * keep;
+      ty = s.hy + Math.sin(a) * keep;
+    } else {
+      // Pacing the edge of the corn nearest him.
+      tx = (F.x0 + 1) * T;
+      ty = Phaser.Math.Clamp(s.hy, (F.y0 + 1) * T, F.y1 * T);
+      speed = STALKER.edgeSpeed;
+    }
+    // It stays in the corn.
+    tx = Phaser.Math.Clamp(tx, (F.x0 + 0.5) * T, (F.x1 + 0.5) * T);
+    ty = Phaser.Math.Clamp(ty, (F.y0 + 0.5) * T, (F.y1 + 0.5) * T);
+
+    // Walk at it and it backs away.
+    const d = this.distToPlayer();
+    if (d < STALKER.minTiles * T) {
+      const ax = (this.x - s.hx) / (d || 1), ay = (this.y - s.hy) / (d || 1);
+      tx = this.x + ax * 2 * T; ty = this.y + ay * 2 * T;
+      speed = STALKER.speed * 1.4;
+    }
+    const dx = tx - this.x, dy = ty - this.y, len = Math.hypot(dx, dy);
+    if (len > 1) { const step = Math.min(len, speed * dt); this.x += dx / len * step; this.y += dy / len * step; }
+
+    // It rustles as it moves through the corn.
+    const moved = Phaser.Math.Distance.Between(this.x, this.y, this.lastX, this.lastY);
+    this.lastX = this.x; this.lastY = this.y;
+    this.rustleTimer -= dt;
+    if (this.rustleTimer <= 0 && (moved > 0.2 || inField)) {
+      this.rustle();
+      this.rustleTimer = inField ? 1.8 + Math.random() * 2.5 : 5 + Math.random() * 6;
+    }
+    this.heartScale = (this.hush || this.leaning > 0) ? 1 : (inField ? 0.45 : 0.2);
+  }
+}

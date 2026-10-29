@@ -185,6 +185,7 @@ const CHAPTERS = {
     night: true,
     reach: 33,      // tonight it stays in the corn
     lures: false,
+    creature: 'stalker', // felt, never seen; it does not attack tonight
     start: [19, 13],
     setup(c) {
       c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
@@ -240,12 +241,8 @@ const CHAPTERS = {
           SFX.play('growl', { vol: 0.45, rate: 1.9 });
           c.say('Spike growls at the corn, low and steady.', 3000);
         });
-        c.waitFor(() => c.inRoom('yard') && c.hy > 27 * T).then(() => {
-          const cr = c.creature;
-          cr.x = 34 * T + 8;
-          cr.y = Phaser.Math.Clamp(c.hy, 10 * T, 35 * T);
-          cr.startHunt();   // it comes to the edge of the corn... and can come no further tonight
-        });
+        // Crossing the yard: something moves at the edge of the corn, and the crickets stop.
+        c.waitFor(() => c.inRoom('yard') && c.hy > 27 * T).then(() => c.creature.yardMoment());
         await c.waitAct(17 * T + 8, 31 * T + 8, 24);
         SFX.play('generator', { vol: 0.7 });
         c.powerOn = true;

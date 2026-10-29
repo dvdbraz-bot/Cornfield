@@ -354,7 +354,7 @@ class FieldScene extends Phaser.Scene {
     const d = cr.distToPlayer();
     // Rule one: when the crickets stop, it is close.
     let target = NIGHT.cricketVolume * Phaser.Math.Clamp((d - NIGHT.cricketsSilentTiles * T) / ((NIGHT.cricketsFullTiles - NIGHT.cricketsSilentTiles) * T), 0, 1);
-    if (cr.state === 'hunt' || this.state !== 'night') target = 0;
+    if (cr.state === 'hunt' || cr.hush || this.state !== 'night') target = 0;
     if (Math.abs(target - this.cricketVol) > 0.01 || (target === 0 && this.cricketVol !== 0)) {
       this.crickets.setVolume(target, target < this.cricketVol ? 0.3 : 1.2);
       this.cricketVol = target;
@@ -362,7 +362,7 @@ class FieldScene extends Phaser.Scene {
 
     // Michael's heartbeat rises as it gets close; the phone shakes with it.
     if (this.state !== 'night') return;
-    const close = Phaser.Math.Clamp(1 - d / (NIGHT.heartbeatTiles * T), 0, 1);
+    const close = Phaser.Math.Clamp(1 - d / (NIGHT.heartbeatTiles * T), 0, 1) * (cr.heartScale === undefined ? 1 : cr.heartScale);
     if (close > 0 && cr.state !== 'asleep') {
       this.beatTimer -= dt;
       if (this.beatTimer <= 0) {
@@ -398,8 +398,18 @@ class FieldScene extends Phaser.Scene {
     this.cEyes = e;
   }
 
+  // A few stalks swaying, as if something just pushed past (only seen in the light).
+  swayCorn(x, y) {
+    for (let i = 0; i < 3; i++) {
+      const l = this.add.rectangle(x - 5 + i * 5, y - 2 + (i % 2) * 4, 2, 9, 0x8a9a3a).setDepth(21).setOrigin(0.5, 1);
+      this.tweens.add({ targets: l, angle: (i % 2 ? 1 : -1) * 25, duration: 140, yoyo: true, repeat: 2, onComplete: () => l.destroy() });
+    }
+  }
+
   drawCreature(time) {
     const cr = this.creature;
+    if (cr.invisible) { this.cBody.setVisible(false); this.cEyes.setAlpha(0); return; }
+    this.cBody.setVisible(true);
     this.cBody.setPosition(Math.round(cr.x), Math.round(cr.y + 6));
     this.cEyes.setPosition(Math.round(cr.x), Math.round(cr.y - 13));
     const d = cr.distToPlayer();

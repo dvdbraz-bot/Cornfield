@@ -82,7 +82,11 @@ Milestone 3 (placeholder art and sound) is on hold. The plan is to get the whole
 **Night 1: Lock up**
 1. Pa asks Michael to lock every window and the front door (0/5), then check the generator in the shed (with a choice).
 2. Spike growls at the corn.
-3. Crossing the yard, once, briefly, the crickets stop: it comes to the edge of the corn and can come no further tonight.
+3. Crossing the yard, the crickets stop and something moves at the edge of the corn. Then the crickets start again.
+   - **Tonight it's felt, never seen,** and it can't hurt you (`Stalker` in `src/Creature.js`, with its numbers in `STALKER`).
+   - **In the corn,** it keeps pace with Michael just beyond his lantern light, behind him and to one side. It rustles from that side, the crickets around him stay silent, and now and then it edges in until stalks move at the rim of the light and his heartbeat quickens.
+   - **With the lantern off,** it comes closer. Walk at it and it backs away.
+   - **Too deep** (10 tiles in): everything goes silent, it crashes through the corn right behind him, and he thinks "Get out of the corn." 
 4. The generator brings the power back, then lock the back door and go to bed. The next chapter would be Day 2.
 
 ## Controls

@@ -64,7 +64,9 @@ class ChapterScene extends FieldScene {
       this.crickets = SFX.loop('crickets', this.cricketVol);
       this.beatTimer = 0;
       this.taught = {};
-      this.creature = new Creature(this, FARM_MAP.RING.x, FARM_MAP.RING.y);
+      this.creature = this.ch.creature === 'stalker'
+        ? new Stalker(this, FARM_MAP.RING.x, FARM_MAP.RING.y)
+        : new Creature(this, FARM_MAP.RING.x, FARM_MAP.RING.y);
       if (!this.ch.lures) this.creature.lureCooldown = Infinity;
       this.makeCreatureLook();
     } else {
@@ -383,6 +385,11 @@ class ChapterScene extends FieldScene {
     if (!this.night && this.inRoom('field') && !this.ch.cornAllowed) {
       this.hx -= 6;
       if (!this.ruleTold || time > this.ruleTold) { this.ruleTold = time + 4000; this.say('Pa said nobody goes into the corn.', 2500); }
+    }
+
+    if (this.night && this.inRoom('field') && !this.has('cornAtNight')) {
+      this.flag('cornAtNight');
+      this.say('Pa said stay out of the corn.', 2500);
     }
 
     if (this.night && this.state === 'night') {
