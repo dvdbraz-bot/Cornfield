@@ -6,17 +6,7 @@
 // and hold your breath; turn and face it with the lantern.
 // Debug view (DEBUG button or G): shows it and what it's thinking, and each
 // press moves its reach line (nights 4, 5, 6, then the field only).
-const NIGHT = {
-  seconds: 240,             // how long until dawn
-  darkness: 0.95,
-  cricketVolume: 0.32,
-  cricketsSilentTiles: 6,   // the crickets are silent when it is this close...
-  cricketsFullTiles: 13,    // ...and full volume when it is this far away
-  heartbeatTiles: 12,       // Michael's heartbeat starts when it is this close
-  oilSeconds: 150,          // a full lantern lasts this long
-  oilPerFlask: 0.35,
-  breathSeconds: 6,         // how long Michael can hold his breath
-};
+// Its numbers (NIGHT) are in FieldScene.js, shared with the story's nights.
 
 // How far its reach goes (tile x of the line; it can't go further west).
 const REACH = [
@@ -81,41 +71,6 @@ class TestNightScene extends FieldScene {
     this.time.delayedCall(800, () => this.say('Night. Something is in the corn. Survive until dawn.', 4500));
   }
 
-  // ---------- the creature's look ----------
-
-  makeCreatureLook() {
-    // Body: only seen in lantern light (it is drawn under the darkness).
-    const c = this.add.container(0, 0).setDepth(16);
-    const g = this.add.graphics();
-    g.fillStyle(0x0a0806, 1);
-    g.fillRect(-7, -22, 14, 22);          // body
-    g.fillRect(-6, -2, 4, 6).fillRect(2, -2, 4, 6); // legs
-    g.fillCircle(0, -25, 6);              // head
-    g.fillTriangle(-6, -27, -3, -29, -9, -36); // horns, curling up
-    g.fillTriangle(6, -27, 3, -29, 9, -36);
-    g.fillRect(-11, -20, 4, 14).fillRect(7, -20, 4, 14); // long arms
-    c.add(g);
-    this.cBody = c;
-    // Eyes: two slanted red slits, drawn above the darkness.
-    const e = this.add.graphics().setDepth(1060);
-    e.fillStyle(0xff2a1a, 1);
-    e.fillRect(-4, 0, 3, 1).fillRect(1, 0, 3, 1);
-    e.fillRect(-4, -1, 1, 1).fillRect(3, -1, 1, 1);
-    this.cEyes = e;
-  }
-
-  drawCreature(time) {
-    const cr = this.creature;
-    this.cBody.setPosition(Math.round(cr.x), Math.round(cr.y + 6));
-    this.cEyes.setPosition(Math.round(cr.x), Math.round(cr.y - 13));
-    const d = cr.distToPlayer();
-    const blink = Math.sin(time / 1700 + cr.x) > 0.97;
-    let a = 0;
-    if (cr.state !== 'asleep' && d < 11 * T && !blink) a = Phaser.Math.Clamp(1.15 - d / (11 * T), 0.15, 1);
-    if (cr.state === 'lure') a = 0; // it is a voice now, nothing more
-    this.cEyes.setAlpha(a);
-  }
-
   drawReach() {
     // Withered grass along the edge of its reach.
     const g = this.reachGfx;
@@ -127,30 +82,6 @@ class TestNightScene extends FieldScene {
         g.fillStyle(i % 2 ? 0x6b5a2a : 0x7a6a34, 1).fillRect(x - 4 + ((i * 5 + ty) % 8), yy, 2, 2);
       }
     }
-  }
-
-  // ---------- events from the creature ----------
-
-  onCreatureState(st) {
-    if (st === 'hunt' && !this.taught.hunt) {
-      this.taught.hunt = true;
-      this.time.delayedCall(600, () => this.say('The crickets have stopped.', 3000));
-    }
-    if (st === 'retreat') {
-      const d = this.creature.distToPlayer();
-      SFX.play('growl', { vol: Phaser.Math.Clamp(1 - d / (12 * T), 0.2, 1), pan: this.panTo(this.creature.x) });
-      if (!this.taught.retreat) { this.taught.retreat = true; this.say('It backs away from the light.', 3000); }
-    }
-  }
-
-  panTo(x) { return Phaser.Math.Clamp((x - this.hx) / (10 * T), -0.85, 0.85); }
-
-  // The lure calls: the same words from the same spot, every time.
-  lureCall(L) {
-    this.bubble(L.x, L.y - 4, L.voice.text, 3000, null, true);
-    const d = Phaser.Math.Distance.Between(this.hx, this.hy, L.x, L.y);
-    if (L.voice.speak) SFX.speakLure(L.voice.text);
-    else SFX.play(L.voice.sound, { vol: 0.7 * Phaser.Math.Clamp(1 - d / (25 * T), 0.2, 1), pan: this.panTo(L.x) });
   }
 
   onNoise(radius) {
@@ -276,32 +207,6 @@ class TestNightScene extends FieldScene {
     Controls.oil = this.oil;
     Controls.crickets = this.cricketVol / NIGHT.cricketVolume;
     this.endFrame();
-  }
-
-  updateSound(dt) {
-    const cr = this.creature;
-    const d = cr.distToPlayer();
-    // Rule one: when the crickets stop, it is close.
-    let target = NIGHT.cricketVolume * Phaser.Math.Clamp((d - NIGHT.cricketsSilentTiles * T) / ((NIGHT.cricketsFullTiles - NIGHT.cricketsSilentTiles) * T), 0, 1);
-    if (cr.state === 'hunt' || this.state !== 'night') target = 0;
-    if (Math.abs(target - this.cricketVol) > 0.01 || (target === 0 && this.cricketVol !== 0)) {
-      this.crickets.setVolume(target, target < this.cricketVol ? 0.3 : 1.2);
-      this.cricketVol = target;
-    }
-
-    // Michael's heartbeat rises as it gets close; the phone shakes with it.
-    if (this.state !== 'night') return;
-    const close = Phaser.Math.Clamp(1 - d / (NIGHT.heartbeatTiles * T), 0, 1);
-    if (close > 0 && cr.state !== 'asleep') {
-      this.beatTimer -= dt;
-      if (this.beatTimer <= 0) {
-        this.beatTimer = 1.1 - 0.72 * close;
-        SFX.play('heartbeat', { vol: 0.2 + 0.6 * close });
-        if (close > 0.3) SFX.vibrate([Math.round(20 + 50 * close), 90, Math.round(15 + 30 * close)]);
-      }
-    } else {
-      this.beatTimer = 0;
-    }
   }
 
   drawHud() {

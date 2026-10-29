@@ -14,5 +14,12 @@ const game = new Phaser.Game({
     height: 270,
   },
   input: { activePointers: 4 },
-  scene: [StartScene, PrologueScene, TestNightScene, UIScene, EndScene],
+  scene: [StartScene, PrologueScene, TestNightScene, ChapterScene, UIScene, EndScene],
+});
+
+// Save the moment the game goes into the background (a phone call, an app switch).
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) return;
+  const ch = game.scene.getScene('Chapter');
+  if (ch && ch.sys.isActive()) ch.saveNow();
 });

@@ -13,9 +13,17 @@ const Controls = {
   crickets: null,      // 0..1 how loud the crickets are (cricket icon); null hides it
   oil: null,           // 0..1 lamp oil left; null hides the oil bar
   showDebugButton: false,
+  notebook: false,        // show the NOTEBOOK button (story chapters)
+  lanternAvailable: true, // show the LANTERN button (not by day)
+  dialogueOpen: false,
+  blockActUntil: 0,       // ignore ACT briefly after a dialogue closes
+  gameScene: null,        // the scene the notebook pauses
+  playerTile: null,       // where Michael is, for the notebook map
   reset() {
     this.moveX = 0; this.moveY = 0; this.run = false;
     this.actPressed = false; this.actHeld = false; this.lanternPressed = false; this.debugPressed = false;
     this.actAvailable = false; this.crickets = null; this.oil = null; this.showDebugButton = false;
+    this.notebook = false; this.lanternAvailable = true; this.dialogueOpen = false; this.blockActUntil = 0;
+    this.gameScene = null; this.playerTile = null;
   },
 };

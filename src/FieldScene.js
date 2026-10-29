@@ -16,6 +16,19 @@ const FIELD_TUNING = {
   lanternOffRadius: 1.5 * T,
 };
 
+// Nights with the creature in them (the test night and the story's nights).
+const NIGHT = {
+  seconds: 240,             // how long until dawn
+  darkness: 0.95,
+  cricketVolume: 0.32,
+  cricketsSilentTiles: 6,   // the crickets are silent when it is this close...
+  cricketsFullTiles: 13,    // ...and full volume when it is this far away
+  heartbeatTiles: 12,       // Michael's heartbeat starts when it is this close
+  oilSeconds: 150,          // a full lantern lasts this long
+  oilPerFlask: 0.35,
+  breathSeconds: 6,         // how long Michael can hold his breath
+};
+
 class FieldScene extends Phaser.Scene {
   // look: colours for the player. start: {x, y} in pixels.
   setupField(map, start, look) {
@@ -57,9 +70,9 @@ class FieldScene extends Phaser.Scene {
     // Key presses are caught the moment they happen, so even a very quick tap
     // between two frames still counts.
     const kb = this.input.keyboard;
-    kb.on('keydown-E', () => { Controls.actPressed = true; });
-    kb.on('keydown-SPACE', () => { Controls.actPressed = true; });
-    kb.on('keydown-F', () => { Controls.lanternPressed = true; });
+    kb.on('keydown-E', () => { if (!Controls.dialogueOpen) Controls.actPressed = true; });
+    kb.on('keydown-SPACE', () => { if (!Controls.dialogueOpen) Controls.actPressed = true; });
+    kb.on('keydown-F', () => { if (!Controls.dialogueOpen) Controls.lanternPressed = true; });
     kb.on('keydown-G', () => { Controls.debugPressed = true; });
     this.scene.launch('UI');
     this.ui = this.scene.get('UI');
@@ -87,7 +100,7 @@ class FieldScene extends Phaser.Scene {
   }
 
   setControlsVisible(v) {
-    if (this.ui && this.ui.setVisibleControls) this.ui.setVisibleControls(v);
+    if (this.ui && this.ui.joy) this.ui.setVisibleControls(v);
   }
 
   // A speech bubble in the world, above (x, y). It removes itself after ms.
@@ -197,17 +210,21 @@ class FieldScene extends Phaser.Scene {
 
   tryMove(dx, dy) {
     const nx = this.hx + dx, ny = this.hy + dy;
-    const blocked = (x, y) => this.map.isBlockedPx(x, y, this.doorOpen);
+    const blocked = (x, y) => this.isBlocked(x, y);
     // the player's feet: a small box below his centre
     if (blocked(nx - 4, ny) || blocked(nx + 4, ny) || blocked(nx - 4, ny + 5) || blocked(nx + 4, ny + 5)) return;
     this.hx = nx; this.hy = ny;
   }
 
+  isBlocked(x, y) { return this.map.isBlockedPx(x, y, this.doorOpen); }
+
+  // The camera follows the player, or this.camFollow (e.g. a car) in cutscenes.
   updateCamera() {
     const cam = this.cameras.main;
     const { width, height } = this.scale;
-    cam.scrollX = Phaser.Math.Clamp(Math.round(this.hx - width / 2), 0, this.map.W * T - width);
-    cam.scrollY = Phaser.Math.Clamp(Math.round(this.hy - height / 2), 0, this.map.H * T - height);
+    const f = this.camFollow || { x: this.hx, y: this.hy };
+    cam.scrollX = Phaser.Math.Clamp(Math.round(f.x - width / 2), 0, this.map.W * T - width);
+    cam.scrollY = Phaser.Math.Clamp(Math.round(f.y - height / 2), 0, this.map.H * T - height);
   }
 
   updateInteract() {
@@ -222,7 +239,7 @@ class FieldScene extends Phaser.Scene {
     Controls.actAvailable = !!best;
     if (best) {
       this.actMarker.setVisible(true).setPosition(Math.round(best.x), Math.round(best.y - 12 + Math.sin(this.time.now / 200) * 1.5));
-      if (Controls.actPressed) best.act();
+      if (Controls.actPressed && performance.now() > Controls.blockActUntil) best.act();
     } else {
       this.actMarker.setVisible(false);
     }
@@ -269,6 +286,7 @@ class FieldScene extends Phaser.Scene {
     const { width, height } = this.scale;
     ctx.globalCompositeOperation = 'source-over';
     ctx.clearRect(0, 0, width, height);
+    if (ambient <= 0.01) { this.darkTex.refresh(); return; } // daylight
     ctx.fillStyle = `rgba(${tint[0]},${tint[1]},${tint[2]},${ambient})`;
     ctx.fillRect(0, 0, width, height);
 
@@ -303,6 +321,91 @@ class FieldScene extends Phaser.Scene {
     Controls.actPressed = false;
     Controls.lanternPressed = false;
     Controls.debugPressed = false;
+  }
+
+  // ---------- nights: the creature, crickets and heartbeat ----------
+
+  onCreatureState(st) {
+    if (st === 'hunt' && !this.taught.hunt) {
+      this.taught.hunt = true;
+      this.time.delayedCall(600, () => this.say('The crickets have stopped.', 3000));
+    }
+    if (st === 'retreat') {
+      const d = this.creature.distToPlayer();
+      SFX.play('growl', { vol: Phaser.Math.Clamp(1 - d / (12 * T), 0.2, 1), pan: this.panTo(this.creature.x) });
+      if (!this.taught.retreat) { this.taught.retreat = true; this.say('It backs away from the light.', 3000); }
+    }
+  }
+
+  panTo(x) { return Phaser.Math.Clamp((x - this.hx) / (10 * T), -0.85, 0.85); }
+
+  // The lure calls: the same words from the same spot, every time.
+  lureCall(L) {
+    this.bubble(L.x, L.y - 4, L.voice.text, 3000, null, true);
+    const d = Phaser.Math.Distance.Between(this.hx, this.hy, L.x, L.y);
+    if (L.voice.speak) SFX.speakLure(L.voice.text);
+    else SFX.play(L.voice.sound, { vol: 0.7 * Phaser.Math.Clamp(1 - d / (25 * T), 0.2, 1), pan: this.panTo(L.x) });
+  }
+
+  updateSound(dt) {
+    const cr = this.creature;
+    const d = cr.distToPlayer();
+    // Rule one: when the crickets stop, it is close.
+    let target = NIGHT.cricketVolume * Phaser.Math.Clamp((d - NIGHT.cricketsSilentTiles * T) / ((NIGHT.cricketsFullTiles - NIGHT.cricketsSilentTiles) * T), 0, 1);
+    if (cr.state === 'hunt' || this.state !== 'night') target = 0;
+    if (Math.abs(target - this.cricketVol) > 0.01 || (target === 0 && this.cricketVol !== 0)) {
+      this.crickets.setVolume(target, target < this.cricketVol ? 0.3 : 1.2);
+      this.cricketVol = target;
+    }
+
+    // Michael's heartbeat rises as it gets close; the phone shakes with it.
+    if (this.state !== 'night') return;
+    const close = Phaser.Math.Clamp(1 - d / (NIGHT.heartbeatTiles * T), 0, 1);
+    if (close > 0 && cr.state !== 'asleep') {
+      this.beatTimer -= dt;
+      if (this.beatTimer <= 0) {
+        this.beatTimer = 1.1 - 0.72 * close;
+        SFX.play('heartbeat', { vol: 0.2 + 0.6 * close });
+        if (close > 0.3) SFX.vibrate([Math.round(20 + 50 * close), 90, Math.round(15 + 30 * close)]);
+      }
+    } else {
+      this.beatTimer = 0;
+    }
+  }
+
+  // ---------- the creature's look ----------
+
+  makeCreatureLook() {
+    // Body: only seen in lantern light (it is drawn under the darkness).
+    const c = this.add.container(0, 0).setDepth(16);
+    const g = this.add.graphics();
+    g.fillStyle(0x0a0806, 1);
+    g.fillRect(-7, -22, 14, 22);          // body
+    g.fillRect(-6, -2, 4, 6).fillRect(2, -2, 4, 6); // legs
+    g.fillCircle(0, -25, 6);              // head
+    g.fillTriangle(-6, -27, -3, -29, -9, -36); // horns, curling up
+    g.fillTriangle(6, -27, 3, -29, 9, -36);
+    g.fillRect(-11, -20, 4, 14).fillRect(7, -20, 4, 14); // long arms
+    c.add(g);
+    this.cBody = c;
+    // Eyes: two slanted red slits, drawn above the darkness.
+    const e = this.add.graphics().setDepth(1060);
+    e.fillStyle(0xff2a1a, 1);
+    e.fillRect(-4, 0, 3, 1).fillRect(1, 0, 3, 1);
+    e.fillRect(-4, -1, 1, 1).fillRect(3, -1, 1, 1);
+    this.cEyes = e;
+  }
+
+  drawCreature(time) {
+    const cr = this.creature;
+    this.cBody.setPosition(Math.round(cr.x), Math.round(cr.y + 6));
+    this.cEyes.setPosition(Math.round(cr.x), Math.round(cr.y - 13));
+    const d = cr.distToPlayer();
+    const blink = Math.sin(time / 1700 + cr.x) > 0.97;
+    let a = 0;
+    if (cr.state !== 'asleep' && d < 11 * T && !blink) a = Phaser.Math.Clamp(1.15 - d / (11 * T), 0.15, 1);
+    if (cr.state === 'lure') a = 0; // it is a voice now, nothing more
+    this.cEyes.setAlpha(a);
   }
 
   // ---------- the kill ----------

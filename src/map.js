@@ -7,8 +7,11 @@
 //   'g' lawn                 'p' dirt path      'C' corn           'T' trampled corn
 //   'R' bare earth (the stone ring)             'w' shed wall      'K' old pickup truck
 //   'P' porch boards         'X' trees / field edge (blocked)
+//   'W' window (in a wall)   'D' front door     'B' back door      'L' attic ladder
+//   'm' green carpet         'j' rose carpet    'e' bed            'a' cupboard / wardrobe
+//   'Q' concrete             'G' generator      'n' dog kennel     'x' boxes
 const TILE = 16;
-const BLOCKED_TILES = new Set([' ', '#', 'c', 't', 'b', 'h', 's', 'v', 'X', 'w', 'K']);
+const BLOCKED_TILES = new Set([' ', '#', 'c', 't', 'b', 'h', 's', 'v', 'X', 'w', 'K', 'W', 'e', 'a', 'G', 'n', 'x']);
 
 function buildMap({ key, W, H, build, wet }) {
   const grid = [];
@@ -109,6 +112,30 @@ function buildMap({ key, W, H, build, wet }) {
               o.fillRect(sx - 1, y + Math.floor(r() * 10), 3, 5);
             }
             break;
+          case 'W': rect(g, x, y, TILE, TILE, '#4a4038'); rect(g, x + 2, y + 3, 12, 8, '#1c2430'); rect(g, x, y + 12, TILE, 4, '#2e2823'); break;
+          case 'D': case 'B': rect(g, x, y, TILE, TILE, '#3a3530'); break;
+          case 'L':
+            rect(g, x, y, TILE, TILE, '#6b4f35');
+            rect(g, x + 3, y, 2, TILE, '#a08060'); rect(g, x + 11, y, 2, TILE, '#a08060');
+            for (let i = 1; i < 16; i += 4) rect(g, x + 3, y + i, 10, 1, '#a08060');
+            break;
+          case 'm': case 'j':
+            rect(g, x, y, TILE, TILE, c === 'm' ? '#2f4a36' : '#7a4a52');
+            if ((tx + ty) % 3 === 0) rect(g, x + 5, y + 6, 1, 1, c === 'm' ? '#3a5a42' : '#8a5a62');
+            break;
+          case 'e':
+            rect(g, x, y, TILE, TILE, '#5a422c');
+            rect(g, x + 1, y + 1, 14, 14, '#c8c0b0');
+            rect(g, x + 1, y + 1, 14, 4, '#e8e0d0');
+            break;
+          case 'a': rect(g, x, y, TILE, TILE, '#5a3e26'); rect(g, x + 7, y + 1, 1, 14, '#3a2816'); rect(g, x + 5, y + 7, 1, 2, '#c8b060'); rect(g, x + 9, y + 7, 1, 2, '#c8b060'); break;
+          case 'Q':
+            rect(g, x, y, TILE, TILE, '#6e6c66');
+            if ((tx * 7 + ty * 3) % 5 === 0) rect(g, x + 2, y + 5, 9, 1, '#55534e');
+            break;
+          case 'G': rect(g, x, y, TILE, TILE, '#6e6c66'); rect(g, x + 1, y + 3, 14, 11, '#3a5a3a'); rect(g, x + 3, y + 5, 4, 4, '#222'); break;
+          case 'n': rect(g, x, y, TILE, TILE, '#2f4a26'); rect(g, x + 1, y + 2, 14, 13, '#7a5a3a'); rect(g, x + 5, y + 9, 6, 6, '#1a120a'); break;
+          case 'x': rect(g, x, y, TILE, TILE, '#6e6c66'); rect(g, x + 1, y + 2, 13, 12, '#8a6a42'); rect(g, x + 1, y + 7, 13, 1, '#6a4a2a'); break;
           case 'X':
             rect(g, x, y, TILE, TILE, '#0b120b');
             rect(g, x + Math.floor(r() * 8), y + Math.floor(r() * 8), 8, 8, '#132013');
@@ -206,6 +233,100 @@ const TEST_MAP = buildMap({
         rect(g, 13 * TILE + 2, 19 * TILE + 1, 28, 46, '#6a2a1e');
         rect(g, 13 * TILE + 4, 19 * TILE + 4, 24, 12, '#2a3036');
         rect(g, 13 * TILE + 4, 19 * TILE + 20, 24, 24, '#4e2016');
+      },
+    };
+  },
+});
+
+// ---------- Milestone 4: the Cole farm ----------
+// From the sketch in the design doc: the dirt road along the top, the house
+// with its porch facing the field, the garage and shed below the house, the
+// cornfield (40 x 30) with the stone ring at its centre. The attic is a room
+// on its own at the bottom of the map, reached by the ladder in the hall.
+const FARM_MAP = buildMap({
+  key: 'farm', W: 78, H: 58, wet: false,
+  build({ set, fill, cornfield, W, H }) {
+    fill(0, 0, W - 1, H - 1, 'g');
+    fill(0, 0, W - 1, 0, 'X');
+    fill(0, 0, 0, H - 1, 'X');
+    fill(W - 1, 0, W - 1, H - 1, 'X');
+    fill(0, 38, W - 1, H - 1, 'X');
+    fill(1, 1, W - 2, 2, 'p');          // the dirt road to Marrowfield
+    fill(9, 3, 15, 6, 'Q');             // the cracked concrete driveway
+
+    // The house.
+    fill(3, 7, 25, 25, '#');
+    fill(4, 8, 13, 14, '.');            // living room
+    fill(15, 8, 24, 14, 'k');           // kitchen
+    fill(14, 11, 14, 12, '.');          // living room <-> kitchen
+    fill(4, 16, 24, 17, '.');           // hallway
+    set(8, 15, '.'); set(19, 15, '.');  // into the hallway
+    fill(4, 19, 9, 24, 'm');            // Michael's old room (dark green)
+    fill(11, 19, 16, 24, 'j');          // Jenny's room
+    fill(18, 19, 24, 24, '.');          // Pa's room
+    set(7, 18, 'm'); set(14, 18, 'j'); set(21, 18, '.');
+    set(9, 7, 'D');                     // front door
+    set(25, 11, 'B');                   // back door, out onto the porch
+    set(6, 7, 'W'); set(20, 7, 'W'); set(3, 21, 'W'); set(21, 25, 'W'); // windows
+    set(5, 16, 'L');                    // ladder up to the attic
+    // furniture
+    fill(4, 10, 4, 11, 'v');            // the old TV on its wall unit
+    fill(11, 10, 11, 12, 's');          // navy leather lounge suite
+    fill(7, 13, 9, 13, 's');
+    fill(12, 8, 13, 8, 'c');            // sideboard (Ma's photo)
+    fill(15, 8, 17, 8, 'c'); fill(22, 8, 24, 8, 'c'); // kitchen counters
+    fill(18, 11, 21, 12, 't');          // the kitchen table
+    set(17, 11, 'b'); set(17, 12, 'b'); set(22, 11, 'b'); set(22, 12, 'b');
+    fill(4, 20, 5, 21, 'e'); set(8, 19, 'c'); set(9, 24, 'a');   // Michael's bed, drawer, wardrobe
+    fill(15, 20, 16, 21, 'e');                                    // Jenny's bed
+    fill(23, 20, 24, 21, 'e'); set(18, 19, 'a');                  // Pa's bed and cupboard
+
+    fill(26, 9, 27, 23, 'P');           // the porch, facing the field
+    set(29, 24, 'n');                   // Spike's kennel
+
+    // Garage (with the locked cupboard) and shed (with the generator).
+    fill(3, 29, 11, 35, 'w');
+    fill(4, 30, 10, 34, 'Q');
+    fill(6, 29, 8, 29, 'Q');
+    set(4, 30, 'a');
+    set(8, 31, 'x'); set(9, 33, 'x'); set(5, 33, 'x'); set(10, 30, 'x');
+    fill(14, 29, 19, 33, 'w');
+    fill(15, 30, 18, 32, 'Q');
+    set(16, 29, 'Q');
+    set(17, 31, 'G');
+
+    cornfield(33, 8, 72, 37);
+    const cx = 52, cy = 22;
+    for (let y = cy - 4; y <= cy + 4; y++) for (let x = cx - 4; x <= cx + 4; x++) {
+      if (Math.hypot(x - cx, y - cy) <= 3.6) set(x, y, 'R');
+    }
+
+    // The attic: a room on its own (no way to walk there; the ladder takes you).
+    fill(1, 46, 20, 56, ' ');
+    fill(3, 48, 16, 55, '#');
+    fill(4, 49, 15, 54, '.');
+    set(5, 52, 'L');
+    set(14, 50, 'x'); set(13, 54, 'x'); set(9, 49, 'x');
+
+    return {
+      FIELD: { x0: 33, y0: 8, x1: 72, y1: 37 },
+      RING: { x: cx * TILE + 8, y: cy * TILE + 8 },
+      paintExtras(g, rect) {
+        for (let i = 0; i < 12; i++) {
+          const a = i / 12 * Math.PI * 2;
+          const sx = cx * TILE + 8 + Math.cos(a) * 34, sy = cy * TILE + 8 + Math.sin(a) * 34;
+          rect(g, Math.round(sx) - 3, Math.round(sy) - 2, 6, 5, '#7a7a74');
+          rect(g, Math.round(sx) - 3, Math.round(sy) + 2, 6, 1, '#45453f');
+        }
+        // Snakes and Ladders board on the kitchen table.
+        rect(g, 19 * TILE + 6, 11 * TILE + 6, 20, 20, '#d8cfa0');
+        for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) if ((i + j) % 2) rect(g, 19 * TILE + 6 + i * 4, 11 * TILE + 6 + j * 4, 4, 4, '#b0a070');
+        // Ma's photo on the sideboard.
+        rect(g, 12 * TILE + 10, 8 * TILE + 3, 8, 10, '#c8b890');
+        rect(g, 12 * TILE + 11, 8 * TILE + 4, 6, 7, '#6a6a7a');
+        // the barrel in the attic
+        g.fillStyle = '#5a4028'; g.beginPath(); g.arc(11 * TILE + 8, 52 * TILE + 8, 9, 0, Math.PI * 2); g.fill();
+        rect(g, 11 * TILE + 1, 52 * TILE + 6, 14, 2, '#3a2a18');
       },
     };
   },

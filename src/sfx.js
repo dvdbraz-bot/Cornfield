@@ -468,7 +468,69 @@ const SFX = (() => {
     });
   }
 
+  // A car engine (2 second loop). Play faster for a smaller car.
+  function buildEngine() {
+    const rand = rng(77);
+    return makeBuffer(2, (L, R, n) => {
+      let lp = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / SR;
+        lp += 0.05 * ((rand() * 2 - 1) - lp);
+        const v = 0.5 * Math.sin(2 * Math.PI * 40 * t) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 20 * t)) + lp * 2 + 0.2 * Math.sin(2 * Math.PI * 80 * t);
+        L[i] = v; R[i] = v;
+      }
+      normalize(L, R, 0.6);
+    });
+  }
+
+  function buildHorn() {
+    return makeBuffer(0.9, (L, R, n) => {
+      for (let i = 0; i < n; i++) {
+        const t = i / SR;
+        const on = (t < 0.3) || (t > 0.45 && t < 0.85);
+        const v = on ? (Math.sign(Math.sin(2 * Math.PI * 420 * t)) * 0.3 + Math.sign(Math.sin(2 * Math.PI * 525 * t)) * 0.3) : 0;
+        L[i] = v; R[i] = v;
+      }
+      lowpass(L, 0.3); lowpass(R, 0.3);
+      normalize(L, R, 0.5);
+    });
+  }
+
+  // The generator coughing into life, then running (use as a loop after).
+  function buildGenerator() {
+    const rand = rng(9);
+    return makeBuffer(2, (L, R, n) => {
+      let lp = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / SR;
+        lp += 0.1 * ((rand() * 2 - 1) - lp);
+        const putt = Math.pow(Math.max(0, Math.sin(2 * Math.PI * 14 * t)), 6);
+        const v = putt * (0.8 * Math.sin(2 * Math.PI * 60 * t) + lp * 2);
+        L[i] = v; R[i] = v;
+      }
+      normalize(L, R, 0.6);
+    });
+  }
+
+  function buildDoor() {
+    const rand = rng(17);
+    return makeBuffer(0.4, (L, R, n) => {
+      for (let i = 0; i < n; i++) {
+        const t = i / SR;
+        const v = (Math.sin(2 * Math.PI * (90 + 40 * Math.exp(-t * 30)) * t) + (rand() * 2 - 1) * 0.4 * Math.exp(-t * 60)) * Math.exp(-t * 14);
+        L[i] = v; R[i] = v;
+      }
+      // the latch
+      noiseBurst(L, 0.12, 0.015, 0.5, rand, true); noiseBurst(R, 0.12, 0.015, 0.5, rand, true);
+      normalize(L, R, 0.7);
+    });
+  }
+
   function build() {
+    buffers.engine = buildEngine();
+    buffers.horn = buildHorn();
+    buffers.generator = buildGenerator();
+    buffers.door = buildDoor();
     buffers.scream = buildScream();
     buffers.bark = buildBark();
     buffers.growl = buildGrowl();

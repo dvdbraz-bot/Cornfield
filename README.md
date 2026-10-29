@@ -5,7 +5,7 @@ Based on David Braz's 2002 short story. The full plan is in the game design docu
 ("Stay Away from the Cornfield — Game Design").
 
 **Play it:** https://dvdbraz-bot.github.io/Cornfield/ (open in Chrome on an Android phone, landscape, with headphones).
-The start screen lets you choose the **Prologue** or the **Test night** (Milestone 2).
+The start screen offers **Continue** (if there's a save), **New game** (the prologue, then Day 1), and the **Test night** (Milestone 2).
 
 Coloured shapes stand in for the art (grey-box). All sounds are generated in code as placeholders.
 
@@ -52,13 +52,46 @@ The thing in the field follows the six states from the design doc:
 
 **Debug view** (the DEBUG button at top right, or G on a keyboard): shows the creature, its state, its suspicion, its distance, how far it can see you, and where it's heading. Each further press moves the reach line to the next night. After the last one, the debug view hides again.
 
+## Milestone 4: the farm and its systems ✅ (with Day 1 and Night 1 to run them)
+Milestone 3 (placeholder art and sound) is on hold. The plan is to get the whole game playable in grey-box first and polish afterwards.
+
+**The Cole farm** (`FARM_MAP`), laid out from the sketch in the design doc:
+- The dirt road to Marrowfield and the cracked concrete driveway.
+- The house: living room (the old Phillips TV, the navy lounge suite, Ma's photo), kitchen (the table with Jenny's Snakes and Ladders board), hallway with the attic ladder, Michael's dark green room (a drawer with Ma's rosary), Jenny's room and Pa's room.
+- The porch facing the field, Spike's kennel, the garage (the locked cupboard), the shed (the generator), the attic (a dusty barrel), and the 40 x 30 cornfield with the stone ring.
+
+**Systems**
+- **Dialogue:** a box at the bottom of the screen with the speaker's name. Tap anywhere (or E / Enter) to continue. **Choices** appear as buttons (or press 1, 2, 3); the game remembers them as flags.
+- **Michael's notebook** (top right, or N): **Notes** (objectives, with done ones ticked), **Clues** (scraps he's found), **Map** (a sketch showing where he is) and **Stones** (the ring of 12, with lost ones crossed out). The game pauses while it's open.
+- **Saving** (on the phone, in the browser's storage): at the start of every day and night, when Michael sits at the Snakes and Ladders board, at the end of each chapter, and the moment the game goes into the background (a call, an app switch). **Continue** picks up from the saved step, with Michael where he was.
+- **Chapters:** each day or night is a script of steps in `src/chapters.js`. Steps can use cutscenes, people walking, cars driving, dialogue, objectives, clues, items, locking doors and windows, and waiting for Michael to reach a place or use a thing.
+- **People:** Jenny, Pa, Jason, Jean and Spike, as coloured shapes with their colours from the story.
+- **Days and nights:** daylight has no darkness and no lantern. Nights have the lantern, the creature (its reach set per night), the crickets, the heartbeat, and the cricket icon. The house is dark until the power's back; then its windows glow from outside. Being caught takes you **back to the last save**.
+- **Pa's rule:** by day, Michael won't go into the corn.
+
+**Day 1: Homecoming**
+1. The red car on the dirt road as a police car speeds past.
+2. Jenny runs out ("It's been so long."), then Pa.
+3. The news in the living room: Mr Jacobs and both his grandsons were killed last night.
+4. Fetch the bags and take them to your old room.
+5. Optional: Ma's photo ("A farm accident," Pa said) and her rosary in the drawer.
+6. Start the novel at the kitchen table, feeling guilty that it's about Mr Jacobs.
+7. A car horn: Jason and Jean arrive in the white Beetle.
+8. Dinner, and Pa's rule: "Nobody goes into the corn. Not until the police are done." (with a choice).
+
+**Night 1: Lock up**
+1. Pa asks Michael to lock every window and the front door (0/5), then check the generator in the shed (with a choice).
+2. Spike growls at the corn.
+3. Crossing the yard, once, briefly, the crickets stop: it comes to the edge of the corn and can come no further tonight.
+4. The generator brings the power back, then lock the back door and go to bed. The next chapter would be Day 2.
+
 ## Controls
-- **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it. To face a direction without walking far, nudge the joystick that way.
-- **Computer:** WASD or arrow keys to move, Shift to run, E or Space = act (hold it to hold your breath), F = lantern, G = debug view. On the start screen, press 1 for the prologue and 2 for the test night.
+- **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it (at night). **NOTEBOOK** is at the top right. In dialogue, tap anywhere to continue, or tap a choice. To face a direction without walking far, nudge the joystick that way.
+- **Computer:** WASD or arrow keys to move, Shift to run, E or Space = act (hold it to hold your breath), F = lantern, N = notebook, G = debug view (test night). In dialogue: E / Enter to continue, 1-3 to choose. On the start screen: 0 = Continue, 1 = New game, 2 = Test night.
 
 ## Tech
 - Phaser 4.2.1, plain JavaScript, no build step. Phaser is included in `lib/`, so nothing loads from the internet.
-- Renders at 480x270 with crisp pixels (`pixelArt: true`), scaled to fit the screen, capped at 30 frames per second (measured: 30.0 in both the prologue and the test night).
+- Renders at 480x270 with crisp pixels (`pixelArt: true`), scaled to fit the screen, capped at 30 frames per second (measured: 30.0 in the prologue, the test night, and the farm at night).
 - Each map is painted once into a single image. The darkness is one small 480x270 canvas redrawn each frame. This keeps the phone cool.
 
 ## Files
@@ -66,13 +99,17 @@ The thing in the field follows the six states from the design doc:
 |---|---|
 | `index.html` | The page that loads everything |
 | `src/main.js` | Game settings (size, 30 fps, scaling) |
-| `src/map.js` | The prologue map (`MAP`) and the test night map (`TEST_MAP`), and how they're drawn |
+| `src/map.js` | The prologue map (`MAP`), the test night map (`TEST_MAP`) and the Cole farm (`FARM_MAP`), and how they're drawn |
 | `src/FieldScene.js` | Shared by both: movement, noise rings, lantern and darkness, speech bubbles and edge arrows, the kill from behind. Movement and noise numbers are in `FIELD_TUNING`. |
 | `src/PrologueScene.js` | The prologue story. Its numbers are in `TUNING`. |
 | `src/Creature.js` | The creature's brain (its six states). All its numbers are in `CREATURE` at the top. |
 | `src/TestNightScene.js` | The Milestone 2 test night: oil, hiding, crickets, heartbeat, reach line, dawn. Its numbers are in `NIGHT` and `REACH`. |
-| `src/UIScene.js` | Joystick, ACT and LANTERN buttons, caption box, cricket icon, oil gauge, DEBUG button |
-| `src/StartScene.js`, `src/EndScene.js` | Start menu, and the title / caught / dawn screens |
+| `src/UIScene.js` | Joystick, ACT and LANTERN buttons, caption box, cricket icon, oil gauge, DEBUG button, the dialogue box and choices, and the notebook |
+| `src/ChapterScene.js` | The story's days and nights on the farm: the helpers chapters use, locks, lighting, the save point, saving, and being caught |
+| `src/chapters.js` | **The story script**, one chapter at a time (Day 1 and Night 1 so far). Easy to read and edit. |
+| `src/NPC.js` | The people (and Spike): their colours and how they walk |
+| `src/save.js` | The save game, and the chapter names |
+| `src/StartScene.js`, `src/EndScene.js` | Start menu, and the title / caught / dawn / end-of-chapter screens |
 | `src/sfx.js` | All sound effects, generated in code |
 | `src/controls.js` | Shared state between the controls, the game and the on-screen displays |
 | `manifest.webmanifest`, `icon-*.png` | Lets you add the game to your home screen as a fullscreen landscape app |
@@ -82,4 +119,5 @@ The thing in the field follows the six states from the design doc:
 - **On a computer:** double-click `index.html`.
 
 ## Next (from the design doc)
-Milestone 3: placeholder art and sound (16 x 16 tiles, simple sprites, wind, crickets, heartbeat). After that, Milestone 4: the farm and its systems (house, shed, garage, attic, dialogue, notebook, saving).
+Milestone 5: the rest of Days 1-3. That's Day 2 (Detective Venn, the Jacobs farm and Ruth, chasing Spike through the corn, the stone ring, and Jason's doomed night), then Day 3 (searching for Jason, the stone through the window, Jason's voice calling Jenny, the chase across the lawn, and Jenny's interlude).
+Then Milestone 6 (Days 4-7, the finale and the endings), and after that the art and audio, the Android app, and Google Play.
