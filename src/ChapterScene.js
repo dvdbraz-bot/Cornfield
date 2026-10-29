@@ -35,6 +35,7 @@ class ChapterScene extends FieldScene {
     const S = SaveGame.state;
     this.chapterId = S.chapter;
     this.ch = CHAPTERS[S.chapter];
+    Unlocks.unlock(this.chapterId);
     this.night = !!this.ch.night;
     const start = (this.resuming && S.x != null) ? { x: S.x, y: S.y } : tileCentre(...this.ch.start);
     // Most chapters are Michael's; a few doomed scenes are someone else's.

@@ -5,7 +5,13 @@ Based on David Braz's 2002 short story. The full plan is in the game design docu
 ("Stay Away from the Cornfield — Game Design").
 
 **Play it:** https://dvdbraz-bot.github.io/Cornfield/ (open in Chrome on an Android phone, landscape, with headphones).
-The start screen offers **Continue** (if there's a save), **New game** (the prologue, then Day 1), and the **Test night** (Milestone 2).
+The start screen offers **Continue** (if there's a save), **New game** (the prologue, then Day 1), **Chapters**, and the **Test night** (Milestone 2).
+
+**Chapters:**
+- **Unlocking:** each chapter unlocks the first time you reach it. A save from before Chapters existed counts too.
+- **Playing:** tap an unlocked chapter to play it from its beginning. This replaces your saved game.
+- **Storage:** unlocks are stored separately from the save, so a new game doesn't lock them again.
+- **Testing shortcut:** tap "Play with headphones." five times to unlock every chapter that's built.
 
 Coloured shapes stand in for the art (grey-box). All sounds are generated in code as placeholders.
 
@@ -120,7 +126,7 @@ The next chapter is Day 3.
 
 ## Controls
 - **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it (at night). **NOTEBOOK** is at the top right. In dialogue, tap anywhere to continue, or tap a choice. To face a direction without walking far, nudge the joystick that way.
-- **Computer:** WASD or arrow keys to move, Shift to run, E or Space = act (hold it to hold your breath), F = lantern, N = notebook, G = debug view (test night). In dialogue: E / Enter to continue, 1-3 to choose. On the start screen: 0 = Continue, 1 = New game, 2 = Test night.
+- **Computer:** WASD or arrow keys to move, Shift to run, E or Space = act (hold it to hold your breath), F = lantern, N = notebook, G = debug view (test night). In dialogue: E / Enter to continue, 1-3 to choose. On the start screen: 0 = Continue, 1 = New game, 2 = Chapters (then a number to pick one, Esc to go back), 3 = Test night.
 
 ## Tech
 - Phaser 4.2.1, plain JavaScript, no build step. Phaser is included in `lib/`, so nothing loads from the internet.

@@ -28,6 +28,7 @@ class PrologueScene extends FieldScene {
 
   create() {
     this.setupField(MAP, tileCentre(29, 8), { body: 0x8a7a62, head: 0xd9b99b, hair: 0x5a4a3a });
+    Unlocks.unlock('prologue');
     this.makeProps();
 
     this.state = 'intro';
