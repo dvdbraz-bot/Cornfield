@@ -225,6 +225,22 @@ class ChapterScene extends FieldScene {
     this.deadSpike = d;
   }
 
+  // Someone who walks along behind Michael (e.g. Jenny on the search).
+  follow(id) { this.followers = this.followers || new Set(); this.followers.add(id); }
+  unfollow(id) { if (this.followers) this.followers.delete(id); }
+
+  updateFollowers(dt) {
+    if (!this.followers || this.frozen) return;
+    for (const id of this.followers) {
+      const n = this.npcs[id];
+      if (!n) continue;
+      const dx = this.hx - n.x, dy = this.hy - n.y, d = Math.hypot(dx, dy);
+      if (d < 1.8 * T) continue;
+      const step = Math.min(d - 1.5 * T, 50 * dt);
+      n.place(n.x + dx / d * step, n.y + dy / d * step);
+    }
+  }
+
   // Something to look at: ACT shows a line.
   look(tx, ty, text, r = 24, ms = 3500) {
     this.interactables.push({ x: tx * T + 8, y: ty * T + 8, r, when: () => true, act: () => this.say(text, ms) });
@@ -326,6 +342,11 @@ class ChapterScene extends FieldScene {
         // open windows show the night through them; locked ones have their latch down and curtains drawn
         g.fillStyle(locked ? 0x5a3030 : 0x0a1018, 1).fillRect(x + 2, y + 3, 12, 8);
         if (locked) g.fillStyle(0x7a4040, 1).fillRect(x + 7, y + 3, 2, 8);
+        if (id === 'kitchenWindow' && this.has('windowBroken')) {
+          // smashed: a jagged hole in the glass
+          g.fillStyle(0x000000, 1).fillRect(x + 4, y + 4, 8, 6);
+          g.lineStyle(1, 0xc8d0d8, 0.8).lineBetween(x + 2, y + 3, x + 7, y + 7).lineBetween(x + 14, y + 4, x + 9, y + 8).lineBetween(x + 3, y + 11, x + 8, y + 7);
+        }
       }
     }
   }
@@ -480,11 +501,15 @@ class ChapterScene extends FieldScene {
       this.houseGlow.setPosition(Math.round(this.hx - 13 * T), Math.round(this.hy - 2 * T)).setAlpha(0.55 + 0.25 * Math.sin(time / 300));
       if (this.flickerTorch) this.lanternOn = Math.random() > 0.12; // the torch is failing
     }
+    this.updateFollowers(dt);
+    this.dt = dt;
     this.waiters = this.waiters.filter(w => { if (w.fn()) { w.res(); return false; } return true; });
     this.updateCamera();
     this.updateInteract();
     this.updateMarkers();
     const L = this.lighting();
+    // People who catch the moonlight (e.g. Jenny in her nightdress), so you can see them in the dark.
+    if (this.glow) for (const id of this.glow) { const n = this.npcs[id]; if (n && n.c.visible) L.lights.push({ x: n.x, y: n.y, r: 20 }); }
     this.extraLight = L.radius || 0;
     this.ambient += (L.ambient - this.ambient) * 0.1;
     this.drawDarkness(time, this.ambient, L.tint, L.lights);

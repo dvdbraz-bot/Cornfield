@@ -95,7 +95,7 @@ Milestone 3 (placeholder art and sound) is on hold. The plan is to get the whole
    - **Too deep** (10 tiles in): everything goes silent, it crashes through the corn right behind him, and he thinks "Get out of the corn." 
 4. The generator brings the power back, then lock the back door and go to bed. The next chapter would be Day 2.
 
-## Milestone 5 (in progress): Days 1-3
+## Milestone 5: Days 1-3 ✅
 Day 1 and Night 1 are above. Added in this build:
 
 **The Jacobs farm**, on the far side of the field, reached by the long road round (Pa's rule keeps Michael out of the corn by day). Ruth Hale sits on the porch and leaves after talking to Michael. The front door is crossed with police tape: Michael can't walk through it, but once Ruth has gone he can duck under it (ACT). Inside, the Snakes and Ladders board is still laid out.
@@ -122,7 +122,25 @@ Day 1 and Night 1 are above. Added in this build:
    - Spike's bark comes once more from right behind him, and his torch starts to fail.
 5. About a minute in, it closes in, and then the hand.
 
-The next chapter is Day 3.
+**Day 3: Jason is missing**
+1. Breakfast: "Anyone seen Jason?" By three o'clock he still isn't back, and Jenny goes into the corn whatever Pa says. Pa: "Then Michael goes with you."
+2. **The search:** Jenny follows Michael through the field, calling for Jason. They find **Jason's torch** between the rows, still on. A crow strikes Jenny's head: "Just a bird." The police search all afternoon and find nothing. Jenny: "They've got him."
+3. **Jean**, in the living room: the engagement ring from Jason's bag. She's a nurse: "Your father isn't in shock. He's afraid." (with a choice)
+4. **Supper:** a carved stone smashes through the kitchen window. Pa pockets it: "It's nothing." Its carvings match the ring in the field (a clue in the notebook).
+
+**Night 3: Jenny, come here**
+- Jason's voice calls from the first row of the corn: "Jenny. Come here." It's the same words from the same spot every time. Jenny runs out.
+- **The chase:** Jenny runs down the lawn towards Jason, who stands in the first row holding his own head.
+  - Catch her before she reaches the corn. She's faster than Michael walks, so you have to run.
+  - If she gets in, the chase starts again.
+  - She catches the moonlight, so you can see her in the dark.
+- Michael: "You were dreaming, Jen. Come inside."
+
+**Interlude: Jenny** (played as Jenny)
+- Later, she slips out alone. Jason stands on the lawn, whole and smiling, calling her name.
+- She holds him. His eyes turn red. He turns her round, and she can't move. Then the hand.
+
+The next chapter is Day 4 (Milestone 6).
 
 ## Controls
 - **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it (at night). **NOTEBOOK** is at the top right. In dialogue, tap anywhere to continue, or tap a choice. To face a direction without walking far, nudge the joystick that way.
@@ -158,9 +176,8 @@ The next chapter is Day 3.
 - **On a computer:** double-click `index.html`.
 
 ## Next (from the design doc)
-The rest of Milestone 5:
-- **Day 3:** searching the field for Jason and finding his torch, the crow, Jean and the engagement ring, and the stone through the kitchen window.
-- **Night 3:** Jason's voice calling Jenny and the chase across the lawn.
-- **Jenny's interlude.**
+Milestone 5 (Days 1-3) is complete. Next is Milestone 6:
+- **Days 4-7**, including the questioning, the power failure, the funeral, the garage cupboard, Pa's confession, the attic, the siege night and Pa's last walk.
+- **The finale and the three endings.**
 
-Then Milestone 6 (Days 4-7, the finale and the endings), and after that the art and audio, the Android app, and Google Play.
+After that come the art and audio, the Android app, and Google Play.

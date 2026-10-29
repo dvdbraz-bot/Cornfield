@@ -539,7 +539,48 @@ const SFX = (() => {
     });
   }
 
+  // A crow: two harsh caws and wingbeats.
+  function buildCrow() {
+    const rand = rng(611);
+    return makeBuffer(1.1, (L, R) => {
+      [0.0, 0.32].forEach(st => {
+        voiced(L, st, 0.22, 330, 'a', 0.8, rand);
+        noiseBurst(L, st, 0.22, 0.35, rand, true); // the rasp
+      });
+      for (let i = 0; i < 6; i++) noiseBurst(L, 0.6 + i * 0.07, 0.05, 0.4, rand, false); // wings
+      lowpass(L, 0.6);
+      R.set(L);
+      normalize(L, R, 0.8);
+    });
+  }
+
+  // A window smashing.
+  function buildGlass() {
+    const rand = rng(919);
+    return makeBuffer(1.4, (L, R, n) => {
+      let prev = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / SR;
+        const x = rand() * 2 - 1;
+        const v = (x - prev) * Math.exp(-t * 9) * 0.9 + Math.sin(2 * Math.PI * 70 * t) * Math.exp(-t * 20) * 0.6;
+        prev = x;
+        L[i] = v; R[i] = v * 0.9;
+      }
+      for (let k = 0; k < 18; k++) {          // shards tinkling
+        const st = 0.05 + rand() * 1.1, f = 2500 + rand() * 4000, a = 0.25 * (1 - st);
+        const s0 = Math.floor(st * SR);
+        for (let j = 0; j < 0.05 * SR && s0 + j < n; j++) {
+          const v = a * Math.sin(2 * Math.PI * f * j / SR) * Math.exp(-j / SR * 80);
+          L[s0 + j] += v; R[s0 + j] += v;
+        }
+      }
+      normalize(L, R, 0.95);
+    });
+  }
+
   function build() {
+    buffers.crow = buildCrow();
+    buffers.glass = buildGlass();
     buffers.yelp = buildYelp();
     buffers.engine = buildEngine();
     buffers.horn = buildHorn();

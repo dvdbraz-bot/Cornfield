@@ -54,6 +54,20 @@ class NPC {
     return this.s.bubble(this.c.x, this.c.y - 10, text, ms, this.name, true);
   }
 
+  // Holding his own head: the head is in his hand, not on his shoulders.
+  headless() {
+    this.c.list.forEach((o, i) => { if (i > 0) o.setVisible(false); });
+    this.c.add(this.s.add.circle(6, 5, 3.5, this.look.head));
+    return this;
+  }
+
+  // Red eyes (it is wearing him).
+  redEyes() {
+    this.c.add(this.s.add.rectangle(-1.5, -5, 1, 1, 0xff2010));
+    this.c.add(this.s.add.rectangle(1.5, -5, 1, 1, 0xff2010));
+    return this;
+  }
+
   setVisible(v) { this.c.setVisible(v); return this; }
   destroy() { this.c.destroy(); }
 }

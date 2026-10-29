@@ -59,14 +59,17 @@ const CHAPTER_NAMES = {
   night1: 'Night 1: Lock up',
   day2: 'Day 2: Spike',
   night2: 'Night 2: Jason',
-  day3: 'Day 3: Jenny, come here',
+  day3: 'Day 3: Jason is missing',
+  night3: 'Night 3: Jenny, come here',
+  interlude3: 'Interlude: Jenny',
+  day4: 'Day 4: On the lawn',
 };
 
 // Which chapters have been reached, for Chapters on the start screen. Kept
 // apart from the save, so starting a new game doesn't lock them again.
 const Unlocks = (() => {
   const KEY = 'cornfield-unlocked-v1';
-  const ORDER = ['prologue', 'day1', 'night1', 'day2', 'night2', 'day3', 'night3', 'day4', 'night4', 'day5', 'night5', 'day6', 'night6', 'day7', 'finale'];
+  const ORDER = ['prologue', 'day1', 'night1', 'day2', 'night2', 'day3', 'night3', 'interlude3', 'day4', 'night4', 'day5', 'night5', 'day6', 'night6', 'day7', 'finale'];
 
   function get() {
     try { return new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch (e) { return new Set(); }

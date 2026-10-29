@@ -573,4 +573,324 @@ const CHAPTERS = {
       },
     ],
   },
+  // ---------------- Day 3: Jason is missing ----------------
+  day3: {
+    start: [19, 13],
+    setup(c) {
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+    },
+    steps: [
+      // Breakfast. "Anyone seen Jason?"
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(19, 13, 0, -1);
+        c.cast({ jenny: [17, 11], jean: [22, 12] });
+        await c.wait(800);
+        await c.talk([
+          [null, 'Day 3.'],
+          ['JENNY', 'Anyone seen Jason?'],
+          ['MICHAEL', 'I thought he was still asleep.'],
+          ['JENNY', "He wasn't on the couch when I came down. I think he went for a walk."],
+        ]);
+        c.cast({ walter: [14, 12] });
+        await c.walkNPC('walter', [[20, 13], [22, 11]], 40);
+        await c.talk([
+          ['PA', 'Morning, everyone.'],
+          [null, 'By half past two, Jason still isn\'t back.'],
+          ['JENNY', "If he's not back by three, I'm going to look for him."],
+          [null, 'Three o\'clock.'],
+          ['JENNY', "I'm going into the corn. I don't care about your rule, Pa."],
+          ['PA', '...Then Michael goes with you.'],
+        ]);
+        c.setCutscene(false);
+        c.objective('search', 'Search the cornfield for Jason, with Jenny.');
+      },
+
+      // The search. His torch. The crow.
+      async (c) => {
+        c.cornAllowed = true;
+        if (!c.npcs.jenny) c.cast({ jenny: [17, 13] });
+        c.cast({ walter: [22, 11], jean: [22, 12] });
+        c.follow('jenny');
+        // Jenny calls for him now and then, once they're in the corn.
+        const calling = c.time.addEvent({ delay: 7000, loop: true, callback: () => {
+          if (c.inRoom('field') && c.npcs.jenny) c.npcs.jenny.say('Jason!', 1800);
+        } });
+        const tp = tileCentre(41, 16);
+        const torch = c.add.container(tp.x, tp.y).setDepth(12).setAngle(30);
+        torch.add([c.add.rectangle(0, 0, 9, 3, 0x6a6a70), c.add.rectangle(5, 0, 2, 4, 0xfff0a0)]);
+        await c.waitAct(tp.x, tp.y, 22);
+        calling.remove();
+        torch.destroy();
+        c.setCutscene(true);
+        await c.talk([
+          [null, "Jason's torch, lying in the dirt between the rows. Still switched on, the batteries nearly dead."],
+          ['JENNY', "That's his."],
+        ]);
+        // Something hits Jenny in the back of the head.
+        const j = c.npcs.jenny;
+        SFX.play('crow', { vol: 0.8, pan: c.panTo(j.x) });
+        c.cameras.main.shake(150, 0.01);
+        const crow = c.add.triangle(j.x, j.y - 8, 0, 4, 10, 0, 10, 8, 0x080808).setDepth(25);
+        c.tweens.add({ targets: crow, x: j.x + 120, y: j.y - 90, duration: 1400, onComplete: () => crow.destroy() });
+        await c.talk([
+          ['JENNY', 'Ah!'],
+          [null, 'Something hits Jenny in the back of the head. She spins round. A crow flaps away over the corn.'],
+          ['JENNY', 'Just a bird.'],
+        ]);
+        c.unfollow('jenny');
+        c.complete('search');
+        c.clue('torch', "Jason's torch", 'Found in the corn between the rows, still switched on, the batteries nearly dead. A crow struck Jenny there.');
+        await c.fadeOut(1200);
+        c.cornAllowed = false;
+        c.placeMichael(19, 13, 0, -1);
+        c.cast({ jenny: [17, 11], walter: [22, 11], jean: [10, 11] });
+        await c.fadeIn(1200);
+        await c.talk([
+          [null, 'The police search the field all afternoon.'],
+          [null, 'They find nothing.'],
+          ['JENNY', "They've got him. The people in the corn. I know they have."],
+        ]);
+        c.setCutscene(false);
+        c.objective('jean', 'Jean wants to talk to you. She\'s in the living room.');
+      },
+
+      // Jean, and the ring.
+      async (c) => {
+        c.cast({ jenny: [17, 11], walter: [22, 11], jean: [10, 11] });
+        await c.waitFor(() => c.inRoom('living'));
+        const choice = await c.talk([
+          ['JEAN', 'I found this in Jason\'s bag.'],
+          [null, 'A small velvet box. Inside, an engagement ring.'],
+          ['JEAN', 'He was going to ask her this week.'],
+          ['MICHAEL', "He'll turn up, Jean."],
+          ['JEAN', "I'm a nurse, Michael. I've seen people in shock."],
+          ['JEAN', "Your father isn't in shock. He's afraid."],
+          ['MICHAEL', '...', ['Afraid of what?', "He's an old man. It's been a hard week."]],
+        ]);
+        await c.talk(choice === 0
+          ? [['JEAN', "Ask him what he knows about that field. He won't look at it. Have you noticed?"]]
+          : [['JEAN', "Maybe. But he won't look at that field. Have you noticed?"]]);
+        await c.talk([[null, 'It is the first real conversation they have had.']]);
+        c.complete('jean');
+        c.clue('ring', 'The engagement ring', "Jean found it in Jason's bag. He was going to ask Jenny this week.");
+        c.clue('jean', 'Jean', "She's a nurse. \"Your father isn't in shock. He's afraid.\" He won't look at the field.");
+        c.objective('supper', 'Supper at the kitchen table.');
+      },
+
+      // Supper. A stone through the window.
+      async (c) => {
+        c.cast({ jenny: [17, 11], walter: [22, 11], jean: [22, 12] });
+        await c.waitFor(() => c.inRoom('kitchen'));
+        c.setCutscene(true);
+        await c.fadeOut(500);
+        c.placeMichael(19, 13, 0, -1);
+        await c.fadeIn(500);
+        await c.talk([[null, 'Supper. Nobody eats much. Jason\'s chair is empty.']]);
+        await c.wait(1200);
+        SFX.play('glass', { vol: 1 });
+        SFX.vibrate(200);
+        c.cameras.main.shake(300, 0.02);
+        c.flag('windowBroken');
+        c.drawOpenings();
+        const stone = c.add.ellipse(20 * T + 8, 7 * T + 8, 7, 5, 0x7a7a74).setDepth(13);
+        c.tweens.add({ targets: stone, y: 10 * T + 6, x: 21 * T, angle: 360, duration: 350 });
+        await c.wait(600);
+        await c.talk([
+          ['JENNY', 'Pa!'],
+          [null, 'A stone, on the kitchen floor, among the glass.'],
+        ]);
+        await c.walkNPC('walter', [[21, 10]], 40);
+        stone.destroy();
+        await c.talk([
+          [null, 'Pa picks it up and turns it over in his hand.'],
+          ['PA', "It's nothing."],
+          ['JENNY', 'Someone threw a rock through our window!'],
+          ['PA', "Kids. It's nothing."],
+          [null, 'He puts it in his pocket. But Michael saw the carving on it.'],
+        ]);
+        c.complete('supper');
+        c.clue('stone', 'The stone through the window', "The same carvings as the ring of stones in the field. Pa put it in his pocket: \"It's nothing.\"");
+        c.time.delayedCall(4500, () => c.say('Its carvings match the stones in the ring. (Notebook: Clues)', 3500));
+        await c.wait(5000);
+        await c.endChapter('night3');
+      },
+    ],
+  },
+
+  // ---------------- Night 3: Jenny, come here ----------------
+  night3: {
+    night: true,
+    reach: 33,
+    lures: false,
+    creature: 'stalker',
+    start: [6, 21],
+    setup(c) {
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+      c.cast({ walter: [21, 21], jean: [9, 12] });
+      c.powerOn = false; // everyone's in bed
+    },
+    steps: [
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(6, 21, 0, 1);
+        c.cast({ jenny: [13, 21] });
+        await c.wait(800);
+        await c.talk([[null, "Night 3. Michael can't sleep."]]);
+        const spot = tileCentre(34, 34); // in the first row of the corn
+        SFX.speakLure('Jenny. Come here.');
+        c.bubble(spot.x, spot.y - 4, 'Jenny. Come here.', 3000, null, true);
+        await c.wait(2200);
+        await c.talk([
+          [null, "A voice from outside. Jason's voice."],
+          [null, "Jenny's door bangs open. Footsteps in the hall."],
+        ]);
+        c.cast({ jenny: [29, 15] });
+        c.placeMichael(26, 12, 1, 0); // on the porch, just behind her
+        c.setCutscene(false);
+        c.objective('chase', 'Catch Jenny before she reaches the corn! Run: push the joystick to the edge.');
+      },
+
+      // The chase across the lawn. If she gets into the corn, start again.
+      async (c) => {
+        const spot = tileCentre(34, 34);
+        // What she sees: Jason in the first row, holding his own head.
+        c.cast({ jason: [34, 34] });
+        c.npcs.jason.headless();
+        const call = () => {
+          SFX.speakLure('Jenny. Come here.');
+          c.bubble(spot.x, spot.y - 4, 'Jenny. Come here.', 3000, null, true);
+        };
+        const voice = c.time.addEvent({ delay: 6500, loop: true, callback: call });
+        c.glow = ['jenny']; // her pale nightdress catches the moonlight
+        // (her route keeps clear of Spike's kennel at 29,24)
+        const path = [[28, 13], [30, 17], [31, 21], [31, 25], [30, 29], [32, 33], [33, 34]].map(([x, y]) => tileCentre(x, y));
+        let caught = false;
+        while (!caught) {
+          c.cast({ jenny: [29, 15] }); // a head start
+          await c.wait(800);           // a beat for your thumb, then she runs
+          let i = 1;
+          const result = await new Promise(res => {
+            c.waitFor(() => {
+              const j = c.npcs.jenny;
+              if (c.near(j.x, j.y, 14)) { res('caught'); return true; }
+              if (i >= path.length) { res('escaped'); return true; }
+              const p = path[i], dx = p.x - j.x, dy = p.y - j.y, d = Math.hypot(dx, dy);
+              const step = 50 * (c.dt || 1 / 30); // faster than Michael walks, a little slower than he runs
+              if (d <= step) { j.place(p.x, p.y); i++; } else j.place(j.x + dx / d * step, j.y + dy / d * step);
+              return false;
+            });
+          });
+          if (result === 'caught') { caught = true; break; }
+          // She's gone into the corn. Try again.
+          c.setCutscene(true);
+          c.say("She's gone into the corn.", 2000);
+          await c.wait(1200);
+          await c.fadeOut(600);
+          c.placeMichael(26, 12, 1, 0); // on the porch, just behind her
+          await c.fadeIn(600);
+          c.say('Again. Catch her before she reaches the corn.', 2500);
+          c.setCutscene(false);
+        }
+        voice.remove();
+        c.glow = null;
+        if (window.speechSynthesis) speechSynthesis.cancel();
+        c.setCutscene(true);
+        await c.talk([
+          ['MICHAEL', 'Jenny?'],
+          [null, 'He touches her shoulder. She freezes.'],
+          ['JENNY', 'I saw Jason. He was right there, in the first row. He was holding...'],
+        ]);
+        c.cast({ jason: null });
+        await c.talk([
+          [null, 'There is nothing in the first row but corn.'],
+          ['MICHAEL', 'You were dreaming, Jen. Come inside.'],
+        ]);
+        c.complete('chase');
+        c.walkNPC('jenny', [[27, 13], [25, 11], [21, 17], [13, 21]], 50);
+        c.setCutscene(false);
+        c.objective('bed', 'Go back to bed.');
+      },
+
+      async (c) => {
+        c.cast({ jenny: [13, 21] });
+        await c.waitAct(5 * T, 21 * T, 30);
+        c.setCutscene(true);
+        await c.talk([[null, 'He lies awake for a long time, listening to the crickets.']]);
+        c.complete('bed');
+        await c.endChapter('interlude3');
+      },
+    ],
+  },
+
+  // ---------------- Interlude: Jenny ----------------
+  // Later, she slips out alone. Jason stands whole and smiling.
+  interlude3: {
+    night: true,
+    player: 'jenny',
+    reach: 33,
+    lures: false,
+    creature: 'stalker',
+    start: [13, 21],
+    setup(c) {
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+      c.cast({ walter: [21, 21], jean: [9, 12], michael: [6, 21] });
+      c.powerOn = false;
+      c.flag('cornAtNight');
+      c.creature.warned = true;
+    },
+    steps: [
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(13, 21, 0, 1);
+        await c.wait(800);
+        await c.talk([
+          [null, "Later. Jenny can't sleep."],
+          ['JENNY', 'He was there. I know he was.'],
+        ]);
+        const spot = tileCentre(31, 20);
+        c.cast({ jason: [31, 20] });
+        c.glow = ['jason']; // he stands in the moonlight
+        c.speakTimer = c.time.addEvent({ delay: 6000, loop: true, callback: () => {
+          SFX.speakLure('Jenny.');
+          c.bubble(spot.x, spot.y - 10, 'Jenny.', 2500, 'JASON', true);
+        } });
+        SFX.speakLure('Jenny.');
+        c.bubble(spot.x, spot.y - 10, 'Jenny.', 2500, 'JASON', true);
+        c.setCutscene(false);
+        c.say('Go to him.', 2500);
+      },
+
+      async (c) => {
+        c.cast({ jason: [31, 20] });
+        c.glow = ['jason'];
+        const j = c.npcs.jason;
+        await c.waitFor(() => c.near(j.x, j.y, 2.2 * T));
+        if (c.speakTimer) c.speakTimer.remove();
+        c.setCutscene(true);
+        await c.talk([
+          ['JASON', 'Jenny.'],
+          ['JENNY', "Jason! I was sure they had you. I was so scared."],
+          [null, 'She runs to him and holds him.'],
+          [null, 'He pulls away, and smiles at her.'],
+        ]);
+        j.redEyes();
+        SFX.play('thud', { vol: 0.6 });
+        await c.talk([
+          [null, 'His eyes turn red.'],
+          ['JENNY', '...Jason?'],
+          [null, "He turns her round, gently. She can't move."],
+        ]);
+        // She faces away from him.
+        const dx = c.hx - j.x, dy = c.hy - j.y, l = Math.hypot(dx, dy) || 1;
+        c.fx = dx / l; c.fy = dy / l;
+        c.state = 'caught';
+        await c.killFromBehind();
+        await c.endChapter('day4');
+      },
+    ],
+  },
 };
