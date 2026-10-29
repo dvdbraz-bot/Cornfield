@@ -85,13 +85,17 @@ const CHAPTERS = {
         await c.waitAct(PARK_RED.x, PARK_RED.y, 28);
         c.say('Two suitcases and a briefcase with his laptop.', 2500);
         c.complete('bags');
-        c.objective('room', 'Take your bags to your old room.');
+        c.objective('room', 'Take your bags to your old room (the green one) and unpack: the bed or the wardrobe.');
       },
 
       async (c) => {
         c.cast({ jenny: [10, 11], walter: [8, 11] });
-        await c.waitAct(5 * T, 21 * T, 30);
-        c.say('Same dark green walls. Same bed, not slept in for two years.', 3500);
+        // (repeat the note's wording here so older saves get the clearer version)
+        c.objective('room', 'Take your bags to your old room (the green one) and unpack: the bed or the wardrobe.');
+        const used = await c.waitActAny([[5 * T, 21 * T], [9 * T + 8, 24 * T + 8]], 30);
+        c.say(used === 0
+          ? 'He drops the bags on the bed. Same dark green walls. Same bed, not slept in for two years.'
+          : 'He hangs his things beside his old clothes, too small now. Same dark green walls.', 4000);
         c.complete('room');
         await c.wait(3800);
         c.objective('write', 'Set up your laptop at the kitchen table.');

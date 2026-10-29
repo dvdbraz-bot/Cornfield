@@ -109,6 +109,18 @@ class ChapterScene extends FieldScene {
     });
   }
 
+  // Several things that all do the same job (e.g. the bed or the wardrobe).
+  // Resolves with the index of the one used, and removes the rest.
+  waitActAny(points, r = 24) {
+    return new Promise(res => {
+      const items = points.map(([x, y], i) => ({
+        x, y, r, step: true, when: () => true,
+        act: () => { this.interactables = this.interactables.filter(o => !items.includes(o)); res(i); },
+      }));
+      this.interactables.push(...items);
+    });
+  }
+
   // lines: [[who, text], [who, text, [choice, choice]], ...]. Resolves with the choice.
   async talk(lines) {
     this.frozen = true;
@@ -265,7 +277,7 @@ class ChapterScene extends FieldScene {
       this.clue('rosary', "Ma's rosary", 'Hidden at the back of the drawer in my old room. I have it now.');
     });
     add(at(4, 10, 8, 16), 22, () => this.say('The old Phillips TV on its white wall unit.', 3000));
-    add(at(9, 24), 22, () => this.say('His old clothes. Too small now.', 2500));
+    add(at(9, 24), 22, () => this.say('His old clothes. Too small now.', 2500), () => !stepNear(at(9, 24)));
     add(at(15, 20, 16, 16), 26, () => this.say("Jenny's bed. Same pink cover since she was twelve.", 3000));
     add(at(18, 19), 22, () => this.say("Pa's cupboard. Shut tight.", 2500));
     add(at(4, 30), 24, () => this.say('The old cupboard. Locked. It was always locked. He and Jenny were never allowed near it.', 4500));
