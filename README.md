@@ -140,7 +140,24 @@ Day 1 and Night 1 are above. Added in this build:
 - Later, she slips out alone. Jason stands on the lawn, whole and smiling, calling her name.
 - She holds him. His eyes turn red. He turns her round, and she can't move. Then the hand.
 
-The next chapter is Day 4 (Milestone 6).
+## Milestone 6 (in progress): Days 4-7, the finale and the endings
+
+**Day 4: On the lawn**
+1. Dawn: Jean screams. Jason and Jenny lie on the lawn by the porch, not in the corn, so its reach has grown.
+2. The police take Michael in. **The interview room** at Marrowfield police station is a new room on the map.
+   - Detective Venn reads his notebook aloud, quoting the clues he actually wrote.
+   - Four questions with dialogue choices. How honest you are is remembered (`vennTrust`) for later.
+3. Released at dusk. Pa drives him home in his old pickup. Neither of them says a word.
+
+**Night 4: The dead grass** (the first real stealth night)
+- The power fails. Pa: "Whatever you do, don't cross the dead grass."
+- **Its reach** now comes out of the corn to a line of withered grass in the yard (`reach: 19`), and the shed with the generator is just past it. The full hunting creature from the test night appears here for the first time in the story.
+- **Spike's bark** calls from the corn. It only has its dead (`lureVoices`).
+- **Lamp oil is low** (about a minute of light), with a can of oil in the shed.
+- **Indoors is safe:** the creature never goes indoors, and it can't see you through walls.
+- **If it catches you,** you go back to the last save. Reaching the house saves.
+
+The next chapter is Day 5.
 
 ## Controls
 - **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it (at night). **NOTEBOOK** is at the top right. In dialogue, tap anywhere to continue, or tap a choice. To face a direction without walking far, nudge the joystick that way.

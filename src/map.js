@@ -332,6 +332,14 @@ const FARM_MAP = buildMap({
     fill(89, 17, 91, 17, 's');
 
     // The attic: a room on its own (no way to walk there; the ladder takes you).
+    // Marrowfield police station: the interview room (a room on its own).
+    fill(22, 44, 40, 56, ' ');
+    fill(24, 46, 36, 54, '#');
+    fill(25, 47, 35, 53, 'Q');
+    fill(29, 49, 31, 50, 't');          // the interview table
+    set(32, 46, 'W');                   // the mirror
+    set(26, 53, 'a');                   // filing cabinet
+
     fill(1, 46, 20, 56, ' ');
     fill(3, 48, 16, 55, '#');
     fill(4, 49, 15, 54, '.');

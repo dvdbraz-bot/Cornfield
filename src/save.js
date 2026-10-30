@@ -63,6 +63,8 @@ const CHAPTER_NAMES = {
   night3: 'Night 3: Jenny, come here',
   interlude3: 'Interlude: Jenny',
   day4: 'Day 4: On the lawn',
+  night4: 'Night 4: The dead grass',
+  day5: 'Day 5: The cupboard',
 };
 
 // Which chapters have been reached, for Chapters on the start screen. Kept

@@ -8,7 +8,7 @@ const ROOMS = {
   living: [4, 8, 13, 14], kitchen: [15, 8, 24, 14], hall: [4, 16, 24, 17],
   michael: [4, 19, 9, 24], jenny: [11, 19, 16, 24], pa: [18, 19, 24, 24],
   house: [3, 7, 25, 25], porch: [26, 9, 27, 23], yard: [1, 26, 32, 37],
-  shed: [15, 30, 18, 32], garage: [4, 30, 10, 34], attic: [3, 48, 16, 55],
+  shed: [15, 30, 18, 32], garage: [4, 30, 10, 34], attic: [3, 48, 16, 55], station: [24, 46, 36, 54],
   field: [33, 8, 72, 37],
 };
 
@@ -75,6 +75,8 @@ class ChapterScene extends FieldScene {
     } else {
       this.state = 'day';
     }
+    // Lamp oil, on nights that count it.
+    this.oil = this.ch.oil === undefined ? null : (this.resuming && S.flags.oil !== undefined ? S.flags.oil : this.ch.oil);
     if (this.ch.setup) this.ch.setup(this);
 
     this.cameras.main.fadeIn(1200, 0, 0, 0);
@@ -241,6 +243,47 @@ class ChapterScene extends FieldScene {
     }
   }
 
+  // The withered grass along the edge of its reach, so you can see the line.
+  drawWitheredLine() {
+    const g = this.add.graphics().setDepth(2);
+    const x = this.reachX;
+    for (let ty = 3; ty < 38; ty++) {
+      if (ty >= 7 && ty <= 25) continue; // (the house is in the way here)
+      for (let i = 0; i < 6; i++) {
+        const yy = ty * T + ((i * 7 + ty * 3) % 16);
+        g.fillStyle(i % 2 ? 0x6b5a2a : 0x8a7a40, 1).fillRect(x - 6 + ((i * 5 + ty * 3) % 12), yy, 2, 3);
+      }
+    }
+  }
+
+  // Inside a building (the house, the shed, the garage): it can't see you there.
+  indoors() { return this.inRoom('house') || this.inRoom('shed') || this.inRoom('garage'); }
+
+  // A flask of lamp oil to pick up.
+  oilFlask(tx, ty, amount = 0.35) {
+    const p = tileCentre(tx, ty);
+    const g = this.add.container(p.x, p.y).setDepth(14);
+    g.add([this.add.rectangle(0, 1, 5, 7, 0x8a6a2a), this.add.rectangle(0, -4, 3, 2, 0x4a3a20)]);
+    const it = { x: p.x, y: p.y, r: 22, when: () => true, act: () => {
+      this.interactables = this.interactables.filter(o => o !== it);
+      g.destroy();
+      this.oil = Math.min(1, (this.oil || 0) + amount);
+      SFX.play('click', { vol: 0.4 });
+      this.say('Lamp oil.', 1500);
+    } };
+    this.interactables.push(it);
+  }
+
+  // Someone lying dead: their shape on the ground, a dark stain. Little more.
+  lyingDead(id, tx, ty, angle = 90) {
+    this.cast({ [id]: [tx, ty] });
+    const n = this.npcs[id];
+    n.c.setAngle(angle).setDepth(12);
+    const p = tileCentre(tx, ty);
+    this.add.ellipse(p.x + 2, p.y + 2, 22, 12, 0x4a0a0a, 0.8).setDepth(11);
+    return n;
+  }
+
   // Something to look at: ACT shows a line.
   look(tx, ty, text, r = 24, ms = 3500) {
     this.interactables.push({ x: tx * T + 8, y: ty * T + 8, r, when: () => true, act: () => this.say(text, ms) });
@@ -269,7 +312,12 @@ class ChapterScene extends FieldScene {
   // Cars: 'red' (Michael's), 'police', 'beetle' (Jason and Jean's).
   makeCar(kind, x, y, angle = 0) {
     const c = this.add.container(x, y).setDepth(13).setAngle(angle);
-    if (kind === 'beetle') {
+    if (kind === 'truck') {
+      // Pa's old pickup, rusted red
+      c.add(this.add.rectangle(0, 0, 32, 15, 0x7a2a1e));
+      c.add(this.add.rectangle(6, 0, 10, 13, 0x2a3036));
+      c.add(this.add.rectangle(-8, 0, 14, 11, 0x5a2016));
+    } else if (kind === 'beetle') {
       c.add(this.add.ellipse(0, 0, 26, 15, 0xe8e8e0));
       c.add(this.add.ellipse(1, 0, 12, 11, 0x9ab0c0));
     } else {
@@ -452,6 +500,8 @@ class ChapterScene extends FieldScene {
       return { ambient: 0.96, tint: [3, 5, 14], lights };
     }
     if (this.inRoom('attic')) return { ambient: 0.85, tint: [3, 5, 14], lights };
+    if (this.inRoom('station')) return { ambient: 0.2, tint: [10, 24, 28], lights }; // strip lights
+    if (this.dusk) return { ambient: 0.45, tint: [60, 24, 6], lights };
     // By day the corn hides anything more than a few tiles away.
     if (!this.night && this.inRoom('field')) return { ambient: 0.72, tint: [40, 42, 16], lights, radius: 3.5 * T };
     if (!this.night) return { ambient: 0, tint: [0, 0, 0], lights };
@@ -474,7 +524,15 @@ class ChapterScene extends FieldScene {
   update(time, delta) {
     const dt = Math.min(delta, 100) / 1000;
     this.readKeys();
-    if (this.night && Controls.lanternPressed && !this.frozen) this.toggleLantern();
+    if (this.night && Controls.lanternPressed && !this.frozen) {
+      if (this.oil === null || this.oil > 0) this.toggleLantern();
+      else this.say('The lantern is out of oil.', 2000);
+    }
+    if (this.oil !== null && this.lanternOn && this.state === 'night') {
+      this.oil = Math.max(0, this.oil - dt / NIGHT.oilSeconds);
+      SaveGame.state.flags.oil = this.oil;
+      if (this.oil <= 0) { this.lanternOn = false; this.say('The lantern sputters out. No oil left.', 3000); }
+    }
     this.movePlayer(dt);
 
     // By day, Pa's rule holds: nobody goes into the corn.
@@ -515,6 +573,7 @@ class ChapterScene extends FieldScene {
     this.drawDarkness(time, this.ambient, L.tint, L.lights);
     Controls.playerTile = { x: this.hx / T, y: this.hy / T };
     Controls.crickets = this.night ? this.cricketVol / NIGHT.cricketVolume : null;
+    Controls.oil = this.oil;
     this.endFrame();
   }
 }

@@ -34,6 +34,8 @@ const CREATURE = {
   lureFollowTiles: 2,      // walk this much closer to the voice and it hunts you
 };
 
+const CREATURE_GROUND = new Set(['g', 'p', 'C', 'T', 'R', 'P', 'Q', 'r', 'n']);
+
 class Creature {
   constructor(scene, x, y) {
     this.s = scene;
@@ -68,6 +70,7 @@ class Creature {
   sightRange() {
     const s = this.s;
     if (s.hidden) return 0;
+    if (s.indoors && s.indoors()) return 0; // walls
     if (s.lanternOn) return CREATURE.lanternSightTiles * T;
     return (s.moving ? CREATURE.darkMovingSightTiles : CREATURE.darkStillSightTiles) * T;
   }
@@ -91,11 +94,12 @@ class Creature {
 
   // ---------- movement ----------
 
+  // It goes where the ground is open: corn, paths, grass, the porch. Never
+  // indoors, and never past its reach line.
   canWalk(px, py) {
     const s = this.s;
     if (px < s.reachX) return false;
-    const c = s.map.tileAtPx(px, py);
-    return !(c === 'X' || c === '#' || c === 'w' || c === 'K' || c === ' ');
+    return CREATURE_GROUND.has(s.map.tileAtPx(px, py));
   }
 
   moveToward(tx, ty, speed, dt) {
@@ -194,9 +198,9 @@ class Creature {
     const ty = Phaser.Math.Clamp(Math.floor(py / T), F.y0 + 1, F.y1 - 1);
     const spot = tileCentre(tx, ty);
     if (spot.x < s.reachX) return;
-    const voice = Math.random() < 0.5
-      ? { text: 'Michael. Come see.', speak: true }
-      : { text: '(Spike barking)', sound: 'bark' };
+    // The voices it can use (a chapter may choose them; it only has its dead).
+    const voices = s.lureVoices || [{ text: 'Michael. Come see.', speak: true }, { text: '(Spike barking)', sound: 'bark' }];
+    const voice = voices[Math.floor(Math.random() * voices.length)];
     this.lure = { ...spot, voice, calls: 0, callTimer: 0, startDist: 0, arrived: false };
     this.setState('lure');
   }

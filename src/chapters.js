@@ -893,4 +893,203 @@ const CHAPTERS = {
       },
     ],
   },
+  // ---------------- Day 4: On the lawn ----------------
+  day4: {
+    start: [6, 21],
+    setup(c) {
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+    },
+    steps: [
+      // Dawn. Jean screams.
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(6, 21, 0, 1);
+        await c.wait(800);
+        await c.talk([[null, 'Day 4. Dawn.']]);
+        SFX.play('scream', { vol: 0.7, rate: 1.45 });
+        SFX.vibrate(150);
+        await c.wait(1600);
+        await c.talk([[null, 'A scream, from outside. Jean.']]);
+        c.setCutscene(false);
+        c.objective('scream', 'Go outside. Out the back, onto the lawn.');
+      },
+
+      // Jason and Jenny, on the lawn. Outside the corn.
+      async (c) => {
+        c.lyingDead('jason', 30, 14, 80);
+        c.lyingDead('jenny', 31, 16, 100);
+        c.cast({ jean: [29, 15], walter: [28, 13] });
+        await c.waitFor(() => c.near(30 * T, 15 * T, 4 * T));
+        c.setCutscene(true);
+        await c.talk([
+          [null, 'Jason and Jenny lie on the grass by the porch.'],
+          [null, 'Michael looks once, and does not look again.'],
+          ['PA', 'No. No, no, no.'],
+          [null, 'Jean is kneeling between them. She does not make a sound now.'],
+          [null, 'They are not in the corn. They are on the lawn.'],
+        ]);
+        c.complete('scream');
+        c.clue('lawn', 'On the lawn', "Jason and Jenny, on the lawn by the porch. Not in the corn. Whatever it is, it isn't staying in the field any more.");
+        // The police come for Michael.
+        const car = c.makeCar('police', -60, 36);
+        const engine = SFX.loop('engine', 0.25);
+        await c.drive(car, [[17 * T, 36], [17 * T, 4.5 * T, 90]], 90);
+        engine.stop(0.6);
+        c.cast({ venn: [26, 12] });
+        await c.talk([
+          ['DETECTIVE VENN', 'Michael Cole. I need you to come with me.'],
+          ['PA', "He's done nothing. He was in his bed!"],
+          ['DETECTIVE VENN', "Then he'll be home by dark."],
+        ]);
+        await c.fadeOut(1500);
+        c.cast({ jason: null, jenny: null, jean: null, walter: null });
+        car.destroy();
+      },
+
+      // The interview room. Venn reads his notebook aloud.
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(30, 51, 0, -1);
+        c.cast({ venn: [30, 48] });
+        await c.fadeIn(1200);
+        const clues = SaveGame.state.clues;
+        const quote = (id, fallback) => (clues.find(k => k.id === id) || { text: fallback }).text;
+        let trust = 0;
+        await c.talk([
+          [null, 'Marrowfield police station. An interview room with a mirror for a wall.'],
+          [null, 'Detective Venn has his notebook open on the table.'],
+          ['DETECTIVE VENN', '"' + quote('novel', "I started writing today. It's about the murders.") + '"'],
+          ['DETECTIVE VENN', '"' + quote('jacobs', 'Henry Jacobs and both his grandsons were killed.') + '"'],
+          ['DETECTIVE VENN', 'Your handwriting, Mr Cole.'],
+        ]);
+        let ch = await c.talk([['DETECTIVE VENN', 'You write about murders, and then they happen.', ["I write about what scares me. I didn't do this.", "It's a novel. It isn't evidence."]]]);
+        await c.talk([['DETECTIVE VENN', ch === 0 ? 'Mm. Everybody says that.' : "That's for me to decide."]]);
+        if (ch === 0) trust++;
+
+        ch = await c.talk([['DETECTIVE VENN', 'Last night. Between midnight and dawn. Where were you?', ['In bed. Earlier I was on the lawn with Jenny. She was sleepwalking.', 'In bed. All night.']]]);
+        if (ch === 0) { trust++; await c.talk([['DETECTIVE VENN', 'Jean says the same. Thank you for not lying to me.']]); }
+        else { trust--; await c.talk([['DETECTIVE VENN', "Jean says she heard you go out. Try that one again, Mr Cole."], ['MICHAEL', '...I brought Jenny back in. She was dreaming. That was all.']]); }
+
+        ch = await c.talk([['DETECTIVE VENN', "Ruth Hale says your father and Henry Jacobs used to go into that field at night. Years ago. With lanterns.", ['Ask my father.', "I don't know anything about that."]]]);
+        await c.talk([['DETECTIVE VENN', ch === 0 ? "I did. He says Ruth Hale is an old woman with a long memory." : "No. Nobody in your family seems to."]]);
+
+        ch = await c.talk([['DETECTIVE VENN', 'What do you think is out there, Mr Cole?', ["Something that isn't a man.", "I don't know."]]]);
+        if (ch === 0) { trust++; await c.talk([[null, 'She looks at him for a long time. She does not laugh.'], ['DETECTIVE VENN', 'Write that down too.']]); }
+        else await c.talk([['DETECTIVE VENN', "Neither do I. That's what bothers me."]]);
+
+        c.flag('vennTrust', trust);
+        await c.talk([
+          ['DETECTIVE VENN', "You can go. Don't leave Marrowfield."],
+          [null, 'They release him at dusk.'],
+        ]);
+        c.clue('questioned', 'Questioned', "Detective Venn read my notebook aloud. She asked about Pa and Henry Jacobs going into the field at night with lanterns. \"Don't leave Marrowfield.\"");
+        await c.fadeOut(1200);
+      },
+
+      // Pa drives him home. Neither of them says a word.
+      async (c) => {
+        c.setCutscene(true);
+        c.cast({ venn: null });
+        c.dusk = true;
+        c.player.setVisible(false);
+        const truck = c.makeCar('truck', -60, 36);
+        c.camFollow = truck;
+        await c.fadeIn(1200);
+        const engine = SFX.loop('engine', 0.3);
+        c.say('Pa drives him home. Neither of them says a word.', 5000);
+        await c.drive(truck, [[13 * T, 36], [13 * T, 5.5 * T, 90]], 55);
+        engine.stop(1);
+        c.camFollow = null;
+        c.placeMichael(12, 6, 0, 1);
+        c.player.setVisible(true);
+        await c.wait(1500);
+        await c.endChapter('night4');
+      },
+    ],
+  },
+
+  // ---------------- Night 4: The dead grass ----------------
+  // The first real stealth night. The power fails; the generator is across
+  // the yard. Tonight its reach comes out of the corn to the line of dead
+  // grass in the yard. The shed is just past it.
+  night4: {
+    night: true,
+    reach: 19,       // the line of withered grass (tile column)
+    lures: true,
+    oil: 0.45,       // running low
+    start: [19, 13],
+    setup(c) {
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+      c.makeCar('truck', 13 * T, 5.5 * T, 90);
+      c.lureVoices = [{ text: '(Spike barking)', sound: 'bark' }]; // it only has its dead
+      c.powerOn = c.has('generator4');
+      c.drawWitheredLine();
+      c.oilFlask(15, 30, 0.35); // a can of lamp oil in the shed (in the corner, away from the generator)
+    },
+    steps: [
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(19, 13, 0, -1);
+        c.cast({ walter: [22, 11], jean: [17, 12] });
+        c.powerOn = true;
+        await c.wait(800);
+        await c.talk([[null, 'Night 4. Nobody eats. Nobody talks.']]);
+        SFX.play('thud', { vol: 0.5 });
+        c.powerOn = false;
+        const choice = await c.talk([
+          [null, 'The lights flicker, and die.'],
+          ['JEAN', 'Not tonight. Please. Not tonight.'],
+          ['PA', 'The generator. I\'ll go.'],
+          ['MICHAEL', '...', ["No. I'll go.", 'You go, then.']],
+        ]);
+        if (choice === 1) await c.talk([['PA', '...'], [null, 'Pa does not move from his chair.'], ['PA', "You're younger. Go."]]);
+        await c.talk([
+          ['PA', "Michael. Whatever you do, don't cross the dead grass."],
+          ['MICHAEL', 'What dead grass?'],
+          ['PA', "You'll see it."],
+          ['JEAN', "Take the lantern. There isn't much oil left."],
+        ]);
+        c.setCutscene(false);
+        c.objective('gen4', "Get the generator running. Out the back door, across the yard to the shed. Don't let it get behind you.");
+      },
+
+      // Across the yard. Spike's bark from the corn.
+      async (c) => {
+        c.cast({ walter: [22, 11], jean: [17, 12] });
+        c.waitFor(() => c.inRoom('porch') || c.inRoom('yard')).then(() => {
+          if (!c.has('withered')) { c.flag('withered'); c.say('A line of dead grass runs across the yard, brown and brittle.', 4000); }
+          c.time.delayedCall(5000, () => { if (c.creature && c.creature.state === 'prowl') { c.creature.lureCooldown = 0; c.creature.startLure(); } });
+        });
+        await c.waitAct(17 * T + 8, 31 * T + 8, 24);
+        SFX.play('generator', { vol: 0.7 });
+        c.powerOn = true;
+        c.flag('generator4');
+        c.say('It catches. The house lights come back on.', 3000);
+        c.complete('gen4');
+        c.objective('back4', 'Get back inside the house.');
+      },
+
+      async (c) => {
+        c.powerOn = true;
+        c.cast({ walter: [22, 11], jean: [17, 12] });
+        await c.waitFor(() => c.inRoom('house'));
+        c.complete('back4');
+        c.saveNow();
+        c.say('Inside. (Saved.)', 2000);
+        c.objective('lock4', 'Lock the back door, and go to bed.');
+        await c.waitAct(24 * T + 8, 11 * T + 8, 14);
+        c.lock('backDoor');
+        await c.waitAct(5 * T, 21 * T, 30);
+        c.setCutscene(true);
+        await c.talk([
+          [null, 'He lies awake, listening.'],
+          [null, 'Out on the porch, something stands for a long time, and then goes away.'],
+        ]);
+        c.complete('lock4');
+        await c.endChapter('day5');
+      },
+    ],
+  },
 };
