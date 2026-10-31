@@ -55,6 +55,12 @@ class Creature {
     this.lure = null;
   }
 
+  // Force the crickets silent for a while (a scripted moment).
+  hushFor(seconds) {
+    this.hush = true;
+    this.s.time.delayedCall(seconds * 1000, () => { this.hush = false; });
+  }
+
   setState(st) {
     if (this.state === st) return;
     const prev = this.state;

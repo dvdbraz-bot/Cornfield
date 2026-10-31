@@ -65,6 +65,8 @@ const CHAPTER_NAMES = {
   day4: 'Day 4: On the lawn',
   night4: 'Night 4: The dead grass',
   day5: 'Day 5: The cupboard',
+  night5: 'Night 5: Holy water',
+  day6: 'Day 6: Faces at the window',
 };
 
 // Which chapters have been reached, for Chapters on the start screen. Kept

@@ -1092,4 +1092,286 @@ const CHAPTERS = {
       },
     ],
   },
+  // ---------------- Day 5: The cupboard ----------------
+  day5: {
+    start: [53, 51],
+    setup(c) {
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+    },
+    steps: [
+      // The funeral. Ruth hands Michael Henry's parcel.
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(53, 51, 0, -1);
+        c.cast({ walter: [51, 51], jean: [55, 51], ruth: [58, 52], venn: [48, 52] });
+        await c.wait(900);
+        await c.talk([
+          [null, 'Day 5. The funeral, in Marrowfield.'],
+          [null, 'Two graves, side by side. Jason. Jenny.'],
+          [null, 'Detective Venn stands at the back, watching everyone.'],
+        ]);
+        await c.fadeOut(900);
+        c.cast({ walter: null, jean: null, venn: null, ruth: [55, 52] });
+        c.placeMichael(53, 52, 1, 0);
+        await c.fadeIn(900);
+        await c.talk([
+          [null, 'Afterwards, Ruth Hale comes to him between the stones.'],
+          ['RUTH HALE', 'Henry left this with me. He said, if anything happened to him, give it to Walter\'s boy.'],
+          ['RUTH HALE', 'Not to Walter.'],
+          [null, 'A parcel in brown paper. Inside: a black book, and a letter.'],
+          [null, 'The letter is one line, in a shaking hand: "If I die, burn it. Walter knows how."'],
+        ]);
+        c.addItem("Henry's black book");
+        c.clue('letter', "Henry's letter", '"If I die, burn it. Walter knows how." It came with a black book. Ruth was told to give it to me, not to Pa.');
+        await c.walkNPC('ruth', [[55, 54], [62, 54]], 30);
+        c.cast({ ruth: null });
+        await c.fadeOut(1200);
+      },
+
+      // Home. Pa drives Jean to the bus. Michael is alone.
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(12, 7, 0, -1);
+        if (!c.cars.truck) c.makeCar('truck', 13 * T, 5.5 * T, 90);
+        c.cast({ walter: [14, 6], jean: [15, 5] });
+        await c.fadeIn(1000);
+        await c.talk([
+          ['JEAN', "I can't stay here. I'm sorry. I can't."],
+          ['PA', "I'll take her to the bus. I'll be back by dark."],
+        ]);
+        c.cast({ walter: null, jean: null });
+        SFX.play('door', { vol: 0.5 });
+        const engine = SFX.loop('engine', 0.3);
+        await c.drive(c.cars.truck, [[13 * T, 36, 180], [-80, 36]], 70);
+        engine.stop(0.8);
+        c.cars.truck.destroy(); delete c.cars.truck;
+        c.setCutscene(false);
+        c.objective('key', "The house is empty. Pa keeps the garage cupboard's key somewhere. Search Pa's room.");
+      },
+
+      async (c) => {
+        await c.waitAct(24 * T, 21 * T, 30);
+        await c.talk([[null, 'Under the mattress, wrapped in a handkerchief: an old iron key.']]);
+        c.addItem('old iron key');
+        c.complete('key');
+        c.objective('cupboard', 'Open the locked cupboard in the garage.');
+      },
+
+      // The cupboard.
+      async (c) => {
+        await c.waitAct(4 * T + 8, 30 * T + 8, 24);
+        c.flag('cupboardOpen');
+        c.setCutscene(true);
+        await c.talk([
+          [null, 'The key turns. The door swings open.'],
+          [null, 'A black robe on a hook.'],
+          [null, 'A shelf of carved stones, like the ones in the field.'],
+          [null, 'And a photograph, black and white.'],
+          [null, 'Pa, young. Henry Jacobs. Other men he does not know, all in black robes, standing around a goat\'s head on a pole.'],
+        ]);
+        c.clue('photo', 'The photograph', 'Pa and Henry Jacobs, young, with other men in black robes around a goat\'s head on a pole. It was in the garage cupboard with a robe and more carved stones.');
+        c.complete('cupboard');
+        c.setCutscene(false);
+        c.objective('wait', 'Wait for Pa in the living room.');
+      },
+
+      // The confrontation.
+      async (c) => {
+        await c.waitFor(() => c.inRoom('living'));
+        c.setCutscene(true);
+        await c.fadeOut(800);
+        c.dusk = true;
+        c.makeCar('truck', 13 * T, 5.5 * T, 90);
+        c.placeMichael(8, 12, 0, -1);
+        c.cast({ walter: [9, 9] });
+        await c.fadeIn(800);
+        let ch = await c.talk([
+          [null, 'Dusk. The pickup on the drive. Pa comes in, and stops.'],
+          [null, 'The robe, the stones and the photograph are on the couch.'],
+          ['MICHAEL', '...', ['What is this, Pa?', '(Throw the photograph down in front of him.)']],
+        ]);
+        if (ch === 1) { SFX.play('door', { vol: 0.3, rate: 1.5 }); await c.talk([[null, 'It lands face up at his feet.']]); }
+        await c.talk([
+          ['PA', 'You had no right to go in there.'],
+          ['MICHAEL', 'Tell me what is going on.'],
+          ['PA', 'Sit down.'],
+          ['PA', 'We called ourselves the Circle. Henry, me, some others. Young men, with too much land and too little sense.'],
+          ['PA', 'One night we were out in the middle of the field, and when we were done, there was a scroll on the ground. It had not been there before.'],
+          ['PA', 'It told us how to call something up. How to make it, and keep it.'],
+          ['PA', 'We did it. God help us, we did it.'],
+          ['PA', 'And one day it went out of control. It killed the others, one by one. Henry and I were the only ones left.'],
+          ['MICHAEL', 'The stones in the field?'],
+          ['PA', 'They keep it in. The floods loosened them.'],
+          ['MICHAEL', 'And the books?'],
+          ['PA', 'We each signed one. It is bound to them. Destroy a book and you hurt it. But the man who signed it dies.'],
+        ]);
+        ch = await c.talk([['MICHAEL', '...', ['What about Ma?', 'Why did you never tell anyone?']]]);
+        if (ch === 1) await c.talk([['PA', 'Who would believe me? Who would you have told, Michael?'], ['MICHAEL', 'And Ma?']]);
+        await c.talk([
+          ['PA', 'Your mother... A farm accident. I told you.'],
+          [null, 'He does not look at you when he says it.'],
+        ]);
+        c.flag('paLiedAboutMa');
+        c.clue('circle', 'The Circle', 'Pa, Henry and others. A scroll appeared in the field. They called something up, and it got out of control and killed the others. Pa and Henry were the last.');
+        c.clue('books', 'The books', 'Each of them signed a black book. Destroy a book and you hurt it, but the man who signed it dies.');
+        c.clue('lie', 'Ma', '"A farm accident." He would not look at me.');
+        await c.wait(800);
+        await c.endChapter('night5');
+      },
+    ],
+  },
+
+  // ---------------- Night 5: Holy water ----------------
+  night5: {
+    night: true,
+    reach: 12,       // its reach is the whole yard now, shed and all
+    lures: true,
+    oil: 0.6,
+    start: [8, 12],
+    setup(c) {
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+      c.makeCar('truck', 13 * T, 5.5 * T, 90);
+      c.lureVoices = [{ text: 'Michael. Come see.', speak: true }, { text: '(Spike barking)', sound: 'bark' }];
+      c.powerOn = true;
+      c.cast({ walter: [21, 21] }); // in his room, door shut
+      c.drawWitheredLine();
+    },
+    steps: [
+      // Jean comes back.
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(8, 12, 0, -1);
+        await c.wait(800);
+        await c.talk([[null, 'Night 5. A knock at the front door.']]);
+        c.cast({ jean: [9, 8] });
+        await c.walkNPC('jean', [[9, 10]], 40);
+        const ch = await c.talk([
+          ['JEAN', "I couldn't get on the bus. I got as far as the station, and I couldn't."],
+          ['JEAN', 'What did he tell you?'],
+          ['MICHAEL', '...', ['Everything. Nearly everything.', 'Enough.']],
+        ]);
+        await c.talk([
+          ['JEAN', ch === 0 ? '"Nearly." What did he leave out?' : 'Then there is more.'],
+          ['MICHAEL', 'My mother. "A farm accident."'],
+          ['JEAN', 'If she knew what they did, she would have done something. Is there anything of hers left in this house?'],
+          ['MICHAEL', 'The attic.'],
+        ]);
+        c.setCutscene(false);
+        c.follow('jean');
+        c.objective('attic', 'Search the attic with Jean. (The ladder is in the hall.)');
+      },
+
+      // Ma's diary.
+      async (c) => {
+        if (!c.npcs.jean) c.cast({ jean: [9, 11] });
+        c.follow('jean');
+        await c.waitFor(() => c.inRoom('attic'));
+        await c.waitAct(14 * T + 8, 50 * T + 8, 24);
+        await c.talk([
+          [null, "Under the Christmas things: a diary, in Ma's handwriting."],
+          [null, '"Walter goes out to the field at night with Henry and the others. They come back smelling of smoke."'],
+          [null, '"The stones keep it in. Twelve of them, in a ring. When the river floods, they loosen."'],
+          [null, '"Each of them signed a black book. The books bind it to them, and them to it."'],
+          [null, '"Holy water and fire will destroy a book. But the one who signed it dies with it."'],
+          [null, '"I have filled the old barrel with holy water from the church font. God forgive me. I am going to stop them."'],
+          ['JEAN', 'Michael. The barrel.'],
+        ]);
+        c.addItem("Ma's diary");
+        c.flag('holyWater');
+        c.complete('attic');
+        c.clue('diary', "Ma's diary", 'The stones keep it in. Each of them signed a black book. Holy water and fire destroy a book, but its signer dies with it. She filled the attic barrel with holy water. She was going to stop them.');
+        c.objective('dunk', "Dunk Henry's black book in the holy water.");
+      },
+
+      // The field screams. Its revenge.
+      async (c) => {
+        c.follow('jean');
+        await c.waitAct(11 * T + 8, 52 * T + 8, 26);
+        c.setCutscene(true);
+        await c.talk([[null, "He pushes Henry's black book under the water. It hisses like a hot iron."]]);
+        SFX.play('scream', { vol: 1, rate: 0.55 });
+        SFX.play('strike', { vol: 0.6, rate: 0.7 });
+        SFX.vibrate([300, 100, 300]);
+        c.cameras.main.shake(1200, 0.02);
+        await c.wait(1800);
+        await c.talk([
+          [null, 'Out in the field, something screams. The whole field screams.'],
+          ['MICHAEL', 'It hurt it. It actually hurt it.'],
+          ['JEAN', "And Henry Jacobs is already dead. So nobody else had to die."],
+        ]);
+        c.removeItem("Henry's black book");
+        c.clue('dunked', "Henry's book", 'I dunked it in the holy water and the whole field screamed. It can be hurt.');
+        // It takes its revenge: three stones, torn out at once.
+        for (let i = 0; i < 3; i++) { SFX.play('thud', { vol: 0.8 }); c.cameras.main.shake(300, 0.015); await c.wait(700); }
+        SaveGame.state.stones = 9;
+        c.drawMissingStones();
+        c.complete('dunk');
+        await c.talk([[null, 'Three heavy blows, far off in the corn. Then silence.']]);
+        c.say('Three stones torn out of the ring. (Notebook: Stones)', 4000);
+        c.setCutscene(false);
+      },
+
+      // Detective Venn, alone in the dark.
+      async (c) => {
+        c.unfollow('jean');
+        c.cast({ jean: [8, 11] });
+        await c.wait(2500);
+        const car = c.makeCar('police', -60, 36);
+        const engine = SFX.loop('engine', 0.25);
+        c.say('Headlights on the road. A police car.', 3000);
+        c.drive(car, [[17 * T, 36], [17 * T, 4.5 * T, 90]], 70).then(() => engine.stop(0.6));
+        c.objective('warn', 'Detective Venn has come alone. Warn her: flash your lantern at her from a front window.');
+        const windows = [[6, 7], [20, 7]].map(([x, y]) => [x * T + 8, y * T + 8]);
+        await c.waitActAny(windows, 26);
+        c.setCutscene(true);
+        c.cast({ venn: [16, 5] });
+        await c.flashAt(c.hx, c.hy - 12, 4);
+        await c.talk([[null, 'He flashes the lantern at the glass. On, off. On, off.']]);
+        const venn = c.npcs.venn;
+        c.glow = ['venn']; // her torch
+        c.camFollow = venn.c;
+        await c.talk([
+          ['DETECTIVE VENN', 'Mr Cole?'],
+          [null, 'She raises a hand. She does not understand.'],
+          ['DETECTIVE VENN', "I'll come round the back."],
+        ]);
+        await c.walkNPC('venn', [[24, 5], [28, 7], [29, 14], [29, 22], [26, 27], [21, 30]], 40);
+        c.creature.hushFor(20);
+        await c.wait(1500);
+        const trust = SaveGame.state.flags.vennTrust || 0;
+        venn.say(trust >= 2 ? "Michael! I see it. I believe y-" : "Who's there? Police!", 1800);
+        await c.wait(1200);
+        SFX.play('scream', { vol: 0.9, rate: 1.3 });
+        SFX.vibrate(300);
+        const at = { x: venn.x, y: venn.y };
+        c.cast({ venn: null });
+        c.glow = null;
+        // her torch, dropped in the grass, still shining
+        c.add.rectangle(at.x, at.y, 7, 3, 0x6a6a70).setDepth(12).setAngle(20);
+        c.extraLights = [{ x: at.x, y: at.y, r: 14 }];
+        await c.wait(1500);
+        c.camFollow = null;
+        await c.talk([
+          [null, 'Her torch lies in the grass at the edge of the yard, still shining.'],
+          ['JEAN', "Michael. Don't. Don't go out there."],
+        ]);
+        c.flag('vennDead');
+        c.complete('warn');
+        c.clue('venn5', 'Detective Venn', "She came alone. I flashed the lantern at her and she didn't understand. She died at the edge of the yard.");
+        c.setCutscene(false);
+        c.objective('bed5', 'Stay inside until morning. Go to bed.');
+      },
+
+      async (c) => {
+        c.cast({ jean: [8, 11] });
+        await c.waitAct(5 * T, 21 * T, 30);
+        c.setCutscene(true);
+        await c.talk([[null, 'Nobody sleeps. Outside, her torch shines in the grass until the battery dies.']]);
+        c.complete('bed5');
+        await c.endChapter('day6');
+      },
+    ],
+  },
 };

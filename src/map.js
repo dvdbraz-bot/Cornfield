@@ -10,9 +10,9 @@
 //   'W' window (in a wall)   'D' front door     'B' back door      'L' attic ladder
 //   'm' green carpet         'j' rose carpet    'e' bed            'a' cupboard / wardrobe
 //   'Q' concrete             'G' generator      'n' dog kennel     'x' boxes
-//   'J' a doorway crossed with police tape
+//   'J' a doorway crossed with police tape   'S' gravestone   'O' an open grave
 const TILE = 16;
-const BLOCKED_TILES = new Set([' ', '#', 'c', 't', 'b', 'h', 's', 'v', 'X', 'w', 'K', 'W', 'e', 'a', 'G', 'n', 'x', 'J']);
+const BLOCKED_TILES = new Set([' ', '#', 'c', 't', 'b', 'h', 's', 'v', 'X', 'w', 'K', 'W', 'e', 'a', 'G', 'n', 'x', 'J', 'S', 'O']);
 
 function buildMap({ key, W, H, build, wet, periodic }) {
   const grid = [];
@@ -117,6 +117,12 @@ function buildMap({ key, W, H, build, wet, periodic }) {
             }
             break;
           case 'W': rect(g, x, y, TILE, TILE, '#4a4038'); rect(g, x + 2, y + 3, 12, 8, '#1c2430'); rect(g, x, y + 12, TILE, 4, '#2e2823'); break;
+          case 'S':
+            rect(g, x, y, TILE, TILE, '#2f4a26');
+            rect(g, x + 4, y + 2, 8, 11, '#8a8a84'); rect(g, x + 5, y + 1, 6, 1, '#8a8a84');
+            rect(g, x + 6, y + 5, 4, 1, '#5a5a54'); rect(g, x + 4, y + 13, 8, 2, '#3d5c31');
+            break;
+          case 'O': rect(g, x, y, TILE, TILE, '#4a3b26'); rect(g, x + 2, y + 1, 12, 14, '#1a120a'); break;
           case 'J':
             rect(g, x, y, TILE, TILE, '#7a5a3c');
             rect(g, x, y, 2, TILE, '#2e2823'); rect(g, x + 14, y, 2, TILE, '#2e2823');
@@ -332,6 +338,14 @@ const FARM_MAP = buildMap({
     fill(89, 17, 91, 17, 's');
 
     // The attic: a room on its own (no way to walk there; the ladder takes you).
+    // Marrowfield cemetery, behind the church (a place on its own).
+    fill(42, 42, 64, 56, ' ');
+    fill(44, 44, 62, 54, 'g');
+    fill(44, 44, 62, 44, '#');          // the church wall
+    for (let gx = 46; gx <= 60; gx += 3) for (const gy of [46, 49, 52]) set(gx, gy, 'S');
+    set(52, 49, 'O'); set(54, 49, 'O');  // two open graves
+    fill(44, 54, 62, 54, 'p');
+
     // Marrowfield police station: the interview room (a room on its own).
     fill(22, 44, 40, 56, ' ');
     fill(24, 46, 36, 54, '#');

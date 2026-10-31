@@ -8,7 +8,7 @@ const ROOMS = {
   living: [4, 8, 13, 14], kitchen: [15, 8, 24, 14], hall: [4, 16, 24, 17],
   michael: [4, 19, 9, 24], jenny: [11, 19, 16, 24], pa: [18, 19, 24, 24],
   house: [3, 7, 25, 25], porch: [26, 9, 27, 23], yard: [1, 26, 32, 37],
-  shed: [15, 30, 18, 32], garage: [4, 30, 10, 34], attic: [3, 48, 16, 55], station: [24, 46, 36, 54],
+  shed: [15, 30, 18, 32], garage: [4, 30, 10, 34], attic: [3, 48, 16, 55], station: [24, 46, 36, 54], graveyard: [44, 44, 62, 54],
   field: [33, 8, 72, 37],
 };
 
@@ -78,6 +78,7 @@ class ChapterScene extends FieldScene {
     // Lamp oil, on nights that count it.
     this.oil = this.ch.oil === undefined ? null : (this.resuming && S.flags.oil !== undefined ? S.flags.oil : this.ch.oil);
     if (this.ch.setup) this.ch.setup(this);
+    if (SaveGame.state.stones < 12) this.drawMissingStones();
 
     this.cameras.main.fadeIn(1200, 0, 0, 0);
     if (!this.resuming && S.step === 0) SaveGame.save(); // a save at the start of every day and night
@@ -164,6 +165,7 @@ class ChapterScene extends FieldScene {
   }
 
   addItem(id) { if (!SaveGame.state.items.includes(id)) SaveGame.state.items.push(id); }
+  removeItem(id) { SaveGame.state.items = SaveGame.state.items.filter(i => i !== id); }
   hasItem(id) { return SaveGame.state.items.includes(id); }
   flag(k, v = true) { SaveGame.state.flags[k] = v; }
   has(k) { return !!SaveGame.state.flags[k]; }
@@ -258,6 +260,32 @@ class ChapterScene extends FieldScene {
 
   // Inside a building (the house, the shed, the garage): it can't see you there.
   indoors() { return this.inRoom('house') || this.inRoom('shed') || this.inRoom('garage'); }
+
+  // Stones torn out of the ring: holes where they were. (SaveGame.state.stones says how many are left.)
+  drawMissingStones() {
+    if (this.stoneHoles) this.stoneHoles.destroy();
+    const g = this.stoneHoles = this.add.graphics().setDepth(3);
+    const R = this.map.RING, lost = 12 - SaveGame.state.stones;
+    const order = [0, 4, 8, 2, 6, 10, 1, 5, 9, 3, 7, 11]; // torn out round the ring
+    for (let k = 0; k < lost; k++) {
+      const a = order[k] / 12 * Math.PI * 2;
+      const x = Math.round(R.x + Math.cos(a) * 34), y = Math.round(R.y + Math.sin(a) * 34);
+      g.fillStyle(0x2a1e10, 1).fillRect(x - 4, y - 3, 8, 7);   // a raw hole in the earth
+    }
+  }
+
+  // Flash a light at a window, as if signalling with the lantern.
+  flashAt(x, y, times = 4) {
+    return new Promise(res => {
+      let n = 0;
+      const ev = this.time.addEvent({ delay: 250, repeat: times * 2 - 1, callback: () => {
+        n++;
+        this.flashLight = n % 2 ? { x, y, r: 40 } : null;
+        SFX.play('click', { vol: 0.3 });
+        if (n >= times * 2) { this.flashLight = null; res(); }
+      } });
+    });
+  }
 
   // A flask of lamp oil to pick up.
   oilFlask(tx, ty, amount = 0.35) {
@@ -426,15 +454,15 @@ class ChapterScene extends FieldScene {
     add(at(9, 24), 22, () => this.say('His old clothes. Too small now.', 2500), () => !stepNear(at(9, 24)));
     add(at(15, 20, 16, 16), 26, () => this.say("Jenny's bed. Same pink cover since she was twelve.", 3000));
     add(at(18, 19), 22, () => this.say("Pa's cupboard. Shut tight.", 2500));
-    add(at(4, 30), 24, () => this.say('The old cupboard. Locked. It was always locked. He and Jenny were never allowed near it.', 4500));
+    add(at(4, 30), 24, () => this.say(this.has('cupboardOpen') ? 'The cupboard stands open. He does not want to look in it again.' : 'The old cupboard. Locked. It was always locked. He and Jenny were never allowed near it.', 4500), () => !stepNear(at(4, 30)));
     add(at(17, 31), 24, () => this.say('The generator. Pa keeps it for when storms take the power out.', 3000), () => !stepNear(at(17, 31)));
     add(at(29, 24), 22, () => this.say("Spike's kennel.", 2000));
     add(PARK_RED, 26, () => this.say('His red car. Too clean for this road.', 2500), () => !!this.cars.red && !stepNear(PARK_RED));
     // The attic ladder in the hall, and back down.
     add(at(5, 16), 20, () => this.climb(true));
     add(at(5, 52), 20, () => this.climb(false));
-    add(at(11, 52), 26, () => this.say('A barrel under the dust and cobwebs. The label is too faded to read in this light.', 4000));
-    add(at(14, 50), 20, () => this.say('Old boxes. Christmas things.', 2500));
+    add(at(11, 52), 26, () => this.say(this.has('holyWater') ? 'Ma\'s barrel of holy water.' : 'A barrel under the dust and cobwebs. The label is too faded to read in this light.', 4000), () => !stepNear(at(11, 52)));
+    add(at(14, 50), 20, () => this.say('Old boxes. Christmas things.', 2500), () => !stepNear(at(14, 50)));
     // Spike, when he's around.
     const scene = this;
     this.interactables.push({
@@ -449,6 +477,8 @@ class ChapterScene extends FieldScene {
     this.frozen = true;
     await this.fadeOut(400);
     this.placeMichael(up ? 6 : 6, up ? 52 : 16, 0, 1);
+    // anyone following him comes too
+    if (this.followers) for (const id of this.followers) if (this.npcs[id]) this.npcs[id].place(this.hx + 18, this.hy);
     await this.fadeIn(400);
     this.frozen = this.cutscene;
     if (up && !this.has('atticSeen')) { this.flag('atticSeen'); this.say('The attic. It smells of dust and old rain.', 3000); }
@@ -494,6 +524,11 @@ class ChapterScene extends FieldScene {
 
   lighting() {
     const lights = [];
+    // In a cutscene that follows someone outside at night, light the scene where the camera is.
+    if (this.night && this.camFollow && !this.endless) {
+      if (this.powerOn) for (const o of Object.values(OPENINGS)) if (!o.door) lights.push({ x: o.tile[0] * T + 8, y: o.tile[1] * T + 8, r: 26 });
+      return { ambient: NIGHT.darkness, tint: [3, 5, 14], lights };
+    }
     if (this.endless) {
       // The house light, far off to the west. It never gets any closer.
       lights.push({ x: this.hx - 13 * T, y: this.hy - 2 * T, r: 9 });
@@ -501,6 +536,7 @@ class ChapterScene extends FieldScene {
     }
     if (this.inRoom('attic')) return { ambient: 0.85, tint: [3, 5, 14], lights };
     if (this.inRoom('station')) return { ambient: 0.2, tint: [10, 24, 28], lights }; // strip lights
+    if (this.inRoom('graveyard')) return { ambient: 0.3, tint: [40, 42, 50], lights }; // overcast
     if (this.dusk) return { ambient: 0.45, tint: [60, 24, 6], lights };
     // By day the corn hides anything more than a few tiles away.
     if (!this.night && this.inRoom('field')) return { ambient: 0.72, tint: [40, 42, 16], lights, radius: 3.5 * T };
@@ -528,7 +564,7 @@ class ChapterScene extends FieldScene {
       if (this.oil === null || this.oil > 0) this.toggleLantern();
       else this.say('The lantern is out of oil.', 2000);
     }
-    if (this.oil !== null && this.lanternOn && this.state === 'night') {
+    if (this.oil !== null && this.lanternOn && this.state === 'night' && !this.cutscene) {
       this.oil = Math.max(0, this.oil - dt / NIGHT.oilSeconds);
       SaveGame.state.flags.oil = this.oil;
       if (this.oil <= 0) { this.lanternOn = false; this.say('The lantern sputters out. No oil left.', 3000); }
@@ -566,6 +602,8 @@ class ChapterScene extends FieldScene {
     this.updateInteract();
     this.updateMarkers();
     const L = this.lighting();
+    if (this.flashLight) L.lights.push(this.flashLight);
+    if (this.extraLights) L.lights.push(...this.extraLights);
     // People who catch the moonlight (e.g. Jenny in her nightdress), so you can see them in the dark.
     if (this.glow) for (const id of this.glow) { const n = this.npcs[id]; if (n && n.c.visible) L.lights.push({ x: n.x, y: n.y, r: 20 }); }
     this.extraLight = L.radius || 0;

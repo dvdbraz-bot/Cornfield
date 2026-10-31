@@ -157,7 +157,23 @@ Day 1 and Night 1 are above. Added in this build:
 - **Indoors is safe:** the creature never goes indoors, and it can't see you through walls.
 - **If it catches you,** you go back to the last save. Reaching the house saves.
 
-The next chapter is Day 5.
+**Day 5: The cupboard**
+1. **The funeral** in Marrowfield's cemetery, a new place on the map: two graves, Jason and Jenny. Venn watches from the back.
+2. **Ruth hands Michael Henry's parcel:** a black book, and a letter: "If I die, burn it. Walter knows how."
+3. Pa drives Jean to the bus. Alone, Michael finds the old iron key under Pa's mattress and opens the garage cupboard: the black robe, more carved stones, and the photograph of Pa, Henry and other robed men around a goat's head on a pole.
+4. **The confrontation** (with choices): Pa admits the Circle, the scroll in the field, calling it up, losing control of it, the stones and the books. Then he lies about Ma: "A farm accident." He won't look at you.
+
+**Night 5: Holy water** (its reach now covers the whole yard, shed and all)
+1. Jean comes back: she couldn't get on the bus. "Is there anything of hers left in this house?"
+2. **The attic, with Jean.** She follows Michael up the ladder. Ma's diary explains the stones, the books, and holy water and fire. The barrel is hers.
+3. **Michael dunks Henry's book** in the holy water, and the whole field screams. It takes its revenge: three stones are torn out of the ring (12 → 9). This shows in the notebook, and as raw holes in the ring itself.
+4. **Detective Venn** arrives alone.
+   - Flash the lantern at her from a front window. She doesn't understand, and she comes round the back.
+   - She dies at the edge of the yard.
+   - What she calls out depends on how honest you were in the Day 4 interview: "Michael! I see it. I believe y-"
+   - Her torch lies in the grass, still shining.
+
+The next chapter is Day 6.
 
 ## Controls
 - **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it (at night). **NOTEBOOK** is at the top right. In dialogue, tap anywhere to continue, or tap a choice. To face a direction without walking far, nudge the joystick that way.
