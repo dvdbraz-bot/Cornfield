@@ -578,7 +578,41 @@ const SFX = (() => {
     });
   }
 
+  // Heavy rain (a 6 second loop).
+  function buildRain() {
+    const rand = rng(1212);
+    return makeBuffer(6, (L, R, n) => {
+      let a = 0, b = 0;
+      for (let i = 0; i < n; i++) {
+        a += 0.35 * ((rand() * 2 - 1) - a);
+        b += 0.35 * ((rand() * 2 - 1) - b);
+        L[i] = a * 0.5; R[i] = b * 0.5;
+      }
+      for (let k = 0; k < 400; k++) noiseBurst(rand() < 0.5 ? L : R, rand() * 5.9, 0.004, 0.25 * rand(), rand, true);
+      normalize(L, R, 0.6);
+    });
+  }
+
+  // A shotgun, out in the dark.
+  function buildGunshot() {
+    const rand = rng(1313);
+    return makeBuffer(2.4, (L, R, n) => {
+      let lp = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / SR;
+        lp += 0.2 * ((rand() * 2 - 1) - lp);
+        const v = (rand() * 2 - 1) * Math.exp(-t * 40) + lp * 2 * Math.exp(-t * 6) + Math.sin(2 * Math.PI * 50 * t) * Math.exp(-t * 8);
+        L[i] = v; R[i] = v;
+      }
+      R.set(L);
+      echo(L, R, [[0.31, 0.35], [0.7, 0.2]]); // off the house and the trees
+      normalize(L, R, 0.98);
+    });
+  }
+
   function build() {
+    buffers.rain = buildRain();
+    buffers.gunshot = buildGunshot();
     buffers.crow = buildCrow();
     buffers.glass = buildGlass();
     buffers.yelp = buildYelp();

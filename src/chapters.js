@@ -1374,4 +1374,333 @@ const CHAPTERS = {
       },
     ],
   },
+  // ---------------- Day 6: The whole truth ----------------
+  day6: {
+    start: [19, 13],
+    setup(c) {
+      c.storm = true;
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+      c.makeCar('truck', 13 * T, 5.5 * T, 90);
+      c.rain = SFX.loop('rain', 0.35);
+      // thunder, now and then
+      c.time.addEvent({ delay: 14000, loop: true, callback: () => { SFX.play('thud', { vol: 0.5, rate: 0.5 }); c.cameras.main.flash(120, 200, 200, 220); } });
+    },
+    steps: [
+      // The whole truth.
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(19, 13, 0, -1);
+        c.cast({ walter: [22, 11], jean: [17, 12] });
+        await c.wait(800);
+        await c.talk([
+          [null, 'Day 6. A second storm, worse than the first.'],
+          [null, 'By noon the road is under water. The power is out. The phone line is dead.'],
+          ['PA', 'You want the truth, Michael. All of it.'],
+          ['PA', 'The souls we gave it. They weren\'t animals. They were men.'],
+          ['PA', 'Farmhands. Drifters. Men nobody came looking for.'],
+          ['PA', "Ruth Hale's brother was one of them."],
+          [null, 'Jean puts her hand over her mouth.'],
+          ['PA', 'And your mother.'],
+          ['PA', 'She found out. She found the books. She was going to stop it.'],
+          ['PA', 'It killed her in the corn. And I told everyone it was a farm accident.'],
+        ]);
+        const ch = await c.talk([['MICHAEL', '...', ["I don't know if I can ever forgive you. But I'm not leaving you to it.", "Don't talk to me. Don't you ever talk to me again."]]]);
+        c.flag('forgave', ch === 0);
+        await c.talk(ch === 0
+          ? [['PA', '...Thank you, son.'], [null, 'He cries, without a sound.']]
+          : [[null, 'Pa nods, as if that is fair. He does not say another word all day.']]);
+        c.clue('truth', 'The whole truth', "The Circle's victims were farmhands and drifters nobody came looking for. Ruth Hale's brother was one of them. It killed Ma in the corn when she found out, and Pa called it a farm accident.");
+        await c.talk([
+          ['JEAN', "Tonight it'll come to the house. We need to be ready."],
+          [null, 'Board the windows. Gather every drop of lamp oil. Fill vials from the holy water.'],
+        ]);
+        c.setCutscene(false);
+      },
+
+      // Prepare for the siege.
+      async (c) => {
+        c.cast({ walter: [22, 11], jean: [8, 11] });
+        const F = SaveGame.state.flags;
+        const windows = ['livingWindow', 'kitchenWindow', 'michaelWindow', 'paWindow'];
+        const boarded = () => windows.filter(id => c.has('boarded:' + id)).length;
+        F.oilCans = F.oilCans || 0;
+        const jobs = [];
+
+        // Planks and a hammer, then board up the windows.
+        jobs.push((async () => {
+          if (!c.hasItem('planks and a hammer')) {
+            c.objective('planks', 'Fetch planks and a hammer from the garage.');
+            await c.waitAct(8 * T + 8, 31 * T + 8, 24);
+            c.addItem('planks and a hammer');
+            c.complete('planks');
+          }
+          c.objective('board', `Board up the windows (${boarded()}/4).`);
+          await Promise.all(windows.filter(id => !c.has('boarded:' + id)).map(id => {
+            const o = OPENINGS[id];
+            return c.waitAct(o.tile[0] * T + 8, o.tile[1] * T + 8, 26).then(() => {
+              c.flag('boarded:' + id);
+              SFX.play('door', { vol: 0.6, rate: 0.8 });
+              c.cameras.main.shake(80, 0.004);
+              c.drawOpenings();
+              c.objective('board', `Board up the windows (${boarded()}/4).`);
+            });
+          }));
+          c.complete('board');
+        })());
+
+        // Lamp oil: three cans around the farm.
+        jobs.push((async () => {
+          const cans = [[6, 32], [15, 30], [16, 9]].slice(F.oilCans);
+          c.objective('oil6', `Gather lamp oil (${F.oilCans}/3): the garage, the shed, the kitchen.`);
+          await Promise.all(cans.map(([x, y]) => {
+            const p = tileCentre(x, y);
+            const can = c.add.container(p.x, p.y).setDepth(14);
+            can.add([c.add.rectangle(0, 1, 6, 8, 0x8a6a2a), c.add.rectangle(0, -4, 3, 2, 0x4a3a20)]);
+            return c.waitAct(p.x, p.y, 20).then(() => {
+              can.destroy();
+              F.oilCans++;
+              SFX.play('click', { vol: 0.4 });
+              c.objective('oil6', `Gather lamp oil (${F.oilCans}/3): the garage, the shed, the kitchen.`);
+            });
+          }));
+          c.complete('oil6');
+        })());
+
+        // Holy water.
+        jobs.push((async () => {
+          if (F.vials) return;
+          c.objective('vials', 'Fill vials with holy water from the barrel in the attic.');
+          await c.waitAct(11 * T + 8, 52 * T + 8, 26);
+          F.vials = 3;
+          c.say('Three small bottles of holy water. (When it is close, ACT throws one.)', 4500);
+          c.complete('vials');
+        })());
+
+        await Promise.all(jobs);
+      },
+
+      async (c) => {
+        c.setCutscene(true);
+        await c.fadeOut(1200);
+        c.storm = false;
+        if (c.rain) c.rain.stop(2);
+        c.placeMichael(9, 12, 0, -1);
+        c.cast({ walter: [21, 21], jean: [8, 11] });
+        c.dusk = true;
+        await c.fadeIn(1200);
+        await c.talk([
+          [null, 'Evening. The rain stops. The silence after it is worse.'],
+          ['JEAN', 'Is it enough?'],
+          ['MICHAEL', 'It has to be.'],
+        ]);
+        await c.endChapter('night6');
+      },
+    ],
+  },
+
+  // ---------------- Night 6: Faces at the window ----------------
+  // The siege. Its reach is at the porch. Keep the lamps lit, keep Jean from
+  // the windows, hide when it tries the doors. Then, near dawn, Pa.
+  night6: {
+    night: true,
+    reach: 3,
+    lures: false,
+    creature: 'stalker', // outside, all around the house; it can't get in while the lamps burn
+    start: [9, 12],
+    setup(c) {
+      const F = SaveGame.state.flags;
+      if (F.oilCans === undefined) F.oilCans = 3;
+      if (F.vials === undefined) F.vials = 3;
+      ['livingWindow', 'kitchenWindow', 'michaelWindow', 'paWindow'].forEach(id => c.flag('boarded:' + id));
+      c.drawOpenings();
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+      c.makeCar('truck', 13 * T, 5.5 * T, 90);
+      c.powerOn = false;
+      c.flag('cornAtNight');
+      c.creature.warned = true;
+      c.addLamp('living', 12, 9, 12, 10);
+      c.addLamp('kitchen', 24, 9, 23, 9);
+      c.addLamp('hall', 14, 16, 14, 17);
+      c.addHidingPlace(9, 24, 'in your old wardrobe');
+      c.addHidingPlace(15, 20, "under Jenny's bed");
+      // Jean: walk up to her and ACT to pull her back from a window.
+      const scene = c;
+      c.interactables.push({
+        get x() { return scene.npcs.jean ? scene.npcs.jean.x : -999; },
+        get y() { return scene.npcs.jean ? scene.npcs.jean.y : -999; },
+        r: 22, when: () => !!c.jeanDrawn, act: () => c.pullJeanBack(),
+      });
+      c.jeanCalm = 0;
+      c.pullJeanBack = () => {
+        c.jeanDrawn = null;
+        c.npcs.jean.say('Michael... It sounded just like her.', 2200);
+        c.npcs.jean.walk([[9 * T + 8, 11 * T + 8]], 45);
+        c.jeanCalm = 8; // she stays put for a while
+      };
+    },
+    steps: [
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(9, 12, 0, -1);
+        c.cast({ jean: [9, 11], walter: [21, 21] });
+        await c.wait(800);
+        await c.talk([
+          [null, 'Night 6. The road is still under water.'],
+          [null, 'Three oil lamps, the oil you gathered, and the boarded windows.'],
+          ['JEAN', 'Keep them burning, Michael. Whatever happens.'],
+        ]);
+        c.setCutscene(false);
+        c.lampsBurning = true;
+        c.objective('siege', `Keep the lamps lit (ACT at a lamp to refill it). Keep Jean away from the windows.`);
+      },
+
+      // Faces at the window. The voice moves from window to window, word for word.
+      async (c) => {
+        c.lampsBurning = true;
+        c.cast({ jean: [9, 11], walter: [21, 21] });
+        let failed = null;
+        const watch = c.waitFor(() => {
+          if (failed || c.siegeDone) return true;
+          if (c.litLamps().length === 0) { failed = 'lamps'; return true; }
+          const j = c.npcs.jean;
+          if (c.jeanCalm > 0) c.jeanCalm -= c.dt || 1 / 30;
+          if (c.jeanDrawn && c.jeanCalm <= 0) {
+            const w = c.jeanDrawn, dx = w.x - j.x, dy = w.y - j.y, d = Math.hypot(dx, dy);
+            if (d < 6) { c.jeanAtWindow = (c.jeanAtWindow || 0) + (c.dt || 1 / 30); if (c.jeanAtWindow > 2.5) { failed = 'jean'; return true; } }
+            else { const st = 18 * (c.dt || 1 / 30); j.place(j.x + dx / d * st, j.y + dy / d * st); }
+          } else c.jeanAtWindow = 0;
+          return false;
+        });
+        const faces = [
+          { who: 'jenny', at: [20, 6], stand: [20, 8], text: 'Michael. Let me in.' },
+          { who: 'jenny', at: [6, 6], stand: [6, 8], text: 'Michael. Let me in.' },
+          { who: 'ma', at: [2, 21], stand: [4, 22], text: 'Michael. Come see.' },
+        ];
+        await c.wait(12000);
+        for (const f of faces) {
+          if (failed) break;
+          const face = c.faceAt(f.who, f.at[0], f.at[1]);
+          const p = tileCentre(f.at[0], f.at[1]);
+          const call = () => { SFX.speakLure(f.text); c.bubble(p.x, p.y - 6, f.text, 3000, null, true); };
+          call();
+          if (f.who === 'ma') c.say("It's Ma's voice.", 3000);
+          const ev = c.time.addEvent({ delay: 6000, loop: true, callback: call });
+          await c.wait(2500);
+          c.jeanDrawn = tileCentre(f.stand[0], f.stand[1]); // Jean is drawn to the window
+          if (!c.has('toldJean')) { c.flag('toldJean'); c.say('Jean is walking to the window. Stop her (ACT near her).', 3500); }
+          await Promise.race([c.wait(26000), watch]);
+          ev.remove();
+          c.cast({ [f.who]: null });
+          c.glow = null;
+          c.jeanDrawn = null;
+        }
+        c.siegeDone = true;
+        await watch;
+        if (failed) {
+          c.setCutscene(true);
+          if (failed === 'jean') {
+            await c.talk([[null, 'Jean presses her hand to the boards, to the face behind them.'], [null, 'The boards burst inward. She is gone into the dark.']]);
+            c.cast({ jean: null });
+          } else {
+            await c.talk([[null, 'The last lamp gutters out.'], [null, 'In the dark, something is in the room with you.']]);
+          }
+          c.state = 'caught';
+          await c.killFromBehind();
+          c.scene.start('End', { mode: 'caught-save' });
+          return new Promise(() => {}); // the chapter stops here
+        }
+        c.siegeDone = false;
+        c.saveNow();
+        c.say('The faces are gone. (Saved.)', 2500);
+      },
+
+      // It tries the doors. Hide.
+      async (c) => {
+        c.lampsBurning = true;
+        c.cast({ jean: [9, 11], walter: [21, 21] });
+        await c.wait(3000);
+        for (let i = 0; i < 3; i++) { SFX.play('door', { vol: 0.9, rate: 0.7 }); c.cameras.main.shake(150, 0.006); await c.wait(500); }
+        c.hidingAllowed = true;
+        c.objective('hide', "It's trying the doors! Hide: your old wardrobe, or under Jenny's bed. Then hold your breath (hold ACT).");
+        c.npcs.jean.walk([[9 * T, 16 * T], [14 * T, 17 * T], [14 * T, 20 * T]], 60).then(() => c.cast({ jean: null })); // she hides too
+        await c.wait(12000);
+        // The back door gives. It walks through the house.
+        SFX.play('strike', { vol: 0.5, rate: 0.8 });
+        const it = c.makeIntruder(25 * T + 8, 11 * T + 8);
+        c.splashTarget = it;
+        c.splashed = false;
+        let found = false;
+        const route = [[21, 13], [19, 16], [12, 16], [7, 17], [7, 20], [8, 21], [7, 20], [7, 17], [19, 16], [25, 11]].map(([x, y]) => tileCentre(x, y));
+        for (const pt of route) {
+          await new Promise(res => c.tweens.add({ targets: it, x: pt.x, y: pt.y, duration: Phaser.Math.Distance.Between(it.x, it.y, pt.x, pt.y) / 28 * 1000, onComplete: res,
+            onUpdate: () => {
+              if (found || c.splashed) return;
+              const d = Phaser.Math.Distance.Between(it.x, it.y, c.hx, c.hy);
+              if (!c.hidden && d < 1.3 * T) found = true;            // it sees you (unless holy water stops it first, from 3 tiles)
+              if (c.hidden && d < 3 * T && (!c.holdingBreath || c.gasped)) found = true; // it hears you breathe
+            } }));
+          if (c.splashed) break; // holy water drives it back out
+          if (found) break;
+        }
+        if (c.splashed && !found) {
+          await new Promise(res => c.tweens.add({ targets: it, x: 25 * T + 8, y: 11 * T + 8, duration: 900, onComplete: res }));
+        }
+        it.destroy();
+        c.splashTarget = null;
+        c.gasped = false;
+        if (found) {
+          c.setCutscene(true);
+          if (c.hidden) c.leaveHiding();
+          await c.talk([[null, 'It stops. It turns its head.']]);
+          c.state = 'caught';
+          await c.killFromBehind();
+          c.scene.start('End', { mode: 'caught-save' });
+          return new Promise(() => {});
+        }
+        c.hidingAllowed = false;
+        if (c.hidden) c.leaveHiding();
+        c.complete('hide');
+        c.cast({ jean: [14, 20] });
+        c.say('It has gone back out into the dark.', 3000);
+        c.saveNow();
+      },
+
+      // Near dawn. Pa.
+      async (c) => {
+        c.lampsBurning = false;
+        c.cast({ jean: [14, 20], walter: [21, 21] });
+        await c.wait(4000);
+        c.setCutscene(true);
+        await c.talk([[null, 'Near dawn. Pa\'s door opens.']]);
+        const pa = c.npcs.walter;
+        pa.c.add(c.add.rectangle(6, 2, 2, 12, 0x3a2a1a)); // the shotgun
+        c.camFollow = pa.c;
+        if (c.has('forgave')) await c.talk([['PA', 'Look after Jean, son.']]);
+        await c.walkNPC('walter', [[21, 18], [21, 16], [24, 13], [24, 11], [26, 11], [29, 14], [32, 19]], 30);
+        pa.say('Time to join the master.', 2500);
+        await c.wait(3000);
+        SFX.play('gunshot', { vol: 1 });
+        SFX.vibrate(250);
+        c.cameras.main.shake(250, 0.015);
+        const at = { x: pa.x, y: pa.y };
+        c.cast({ walter: null });
+        c.lyingDead('walter', Math.floor(at.x / T), Math.floor(at.y / T), 90);
+        c.creature.hushFor(30);
+        await c.wait(2500);
+        await c.talk([
+          [null, 'One shot.'],
+          [null, 'By the time Michael reaches him, the crickets have gone quiet and it is over.'],
+          [null, 'In his pocket: the carved stone from the kitchen window, and a black book with his name in it.'],
+        ]);
+        c.camFollow = null;
+        c.addItem("Pa's black book");
+        c.flag('paDead');
+        c.clue('pa', 'Pa', "He walked to the edge of the field with his shotgun. \"Time to join the master.\" With him gone, his book can be destroyed and no one else will die with it.");
+        c.complete('siege');
+        await c.endChapter('day7');
+      },
+    ],
+  },
 };

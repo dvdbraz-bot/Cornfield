@@ -173,7 +173,24 @@ Day 1 and Night 1 are above. Added in this build:
    - What she calls out depends on how honest you were in the Day 4 interview: "Michael! I see it. I believe y-"
    - Her torch lies in the grass, still shining.
 
-The next chapter is Day 6.
+**Day 6: The whole truth** (a storm: rain, thunder, the road flooded, the power and phone lines down)
+1. **Pa tells the whole truth.** The Circle's victims were farmhands and drifters nobody came looking for, and Ruth's brother was one of them. It killed Ma in the corn when she found out. **You choose whether Michael forgives him** (remembered as `forgave`).
+2. **Prepare for the siege**, in any order:
+   - Fetch planks from the garage and board up the four windows.
+   - Gather three cans of lamp oil (garage, shed, kitchen).
+   - Fill three vials from the holy water barrel in the attic.
+
+**Night 6: Faces at the window** (the siege; Michael stays indoors)
+- **Three oil lamps** (living room, hall, kitchen) burn down. ACT at a lamp to refill it from the oil you gathered. If they all go out, it gets in.
+- **Faces at the window:** Jenny's face with red eyes at the kitchen window, then the living room ("Michael. Let me in."), then Ma at Michael's window ("Michael. Come see.").
+  - The voice moves from window to window now, but it repeats itself word for word.
+  - **Jean is drawn to the windows.** Walk up to her and press ACT to pull her back. If she stands at the boards too long, they burst inward.
+- **It tries the doors:** hide in your old wardrobe or under Jenny's bed.
+  - It walks through the house. Hold ACT to hold your breath when it's near: if it hears you breathing, it finds you.
+  - **Holy water:** if it's within 3 tiles, ACT throws a vial and drives it back (3 vials).
+- **Near dawn,** Pa walks out to the edge of the field with his shotgun. If you forgave him, he says "Look after Jean, son." first. Then "Time to join the master." One shot. His book can now be destroyed without anyone else dying.
+
+The next chapter is Day 7, the last day.
 
 ## Controls
 - **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it (at night). **NOTEBOOK** is at the top right. In dialogue, tap anywhere to continue, or tap a choice. To face a direction without walking far, nudge the joystick that way.

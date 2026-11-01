@@ -8,6 +8,7 @@ const CAST = {
   venn:   { name: 'DETECTIVE VENN', body: 0x3a3a46, head: 0xd8b898, hair: 0x2a2018 }, // dark coat
   ruth:   { name: 'RUTH HALE', body: 0x262626, head: 0xd8c0a8, hair: 0xd8d8d8 },   // black dress, white bun
   michael: { name: 'MICHAEL', body: 0xe8e8e0, head: 0xc89a78, hair: 0x2a1a10 },
+  ma:     { name: 'MA', body: 0x5a5a8a, head: 0xe0c8b0, hair: 0x4a3020 },        // as in her photo
 };
 
 class NPC {

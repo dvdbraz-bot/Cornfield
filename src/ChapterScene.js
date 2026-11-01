@@ -287,6 +287,136 @@ class ChapterScene extends FieldScene {
     });
   }
 
+  // ---------- the siege (Night 6) ----------
+
+  // Oil lamps in the house. Each burns down and must be refilled (ACT) from
+  // the oil cans you gathered (SaveGame.state.flags.oilCans).
+  addLamp(id, tx, ty, standTx, standTy) {
+    this.lamps = this.lamps || [];
+    const p = tileCentre(tx, ty);
+    const g = this.add.container(p.x, p.y).setDepth(14);
+    g.add([this.add.rectangle(0, 2, 5, 6, 0x8a6a2a), this.add.rectangle(0, -3, 3, 4, 0xffd27a)]);
+    const lamp = { id, x: p.x, y: p.y, fuel: 1, g, flame: g.list[1] };
+    this.lamps.push(lamp);
+    const st = tileCentre(standTx, standTy);
+    this.interactables.push({ x: st.x, y: st.y, r: 20, when: () => !this.hidden && lamp.fuel < 0.8, act: () => this.refillLamp(lamp) });
+    return lamp;
+  }
+
+  refillLamp(lamp) {
+    const F = SaveGame.state.flags;
+    if (!(F.oilCans > 0)) { this.say('No oil left to fill it with.', 2000); return; }
+    F.oilCans--;
+    lamp.fuel = 1;
+    SFX.play('click', { vol: 0.4 });
+    this.say(`Lamp filled. (Oil left: ${F.oilCans})`, 2000);
+  }
+
+  updateLamps(dt) {
+    if (!this.lamps) return;
+    for (const l of this.lamps) {
+      if (this.lampsBurning) l.fuel = Math.max(0, l.fuel - dt / 130); // a full lamp burns about two minutes
+      l.flame.setVisible(l.fuel > 0).setAlpha(0.6 + 0.4 * l.fuel);
+    }
+  }
+
+  litLamps() { return (this.lamps || []).filter(l => l.fuel > 0); }
+
+  // Hiding (a wardrobe, under a bed): tap ACT to get in or out, hold ACT to hold your breath.
+  addHidingPlace(tx, ty, what) {
+    const p = tileCentre(tx, ty);
+    this.interactables.push({ x: p.x, y: p.y, r: 24, when: () => !this.hidden && this.hidingAllowed, act: () => this.hideIn(p, what) });
+  }
+
+  hideIn(p, what) {
+    this.hidden = true;
+    this.frozen = true;
+    this.ignoreHold = true;
+    this.holdTime = 0;
+    this.breath = 1;
+    this.breathLock = 0;
+    this.hideFrom = { x: this.hx, y: this.hy };
+    this.player.setVisible(false);
+    this.lanternOn = false;
+    SFX.play('door', { vol: 0.3, rate: 1.4 });
+    this.say(`Hiding ${what}. Hold ACT to hold your breath. Tap ACT to come out.`, 4500);
+    if (!this.breathBar) {
+      this.breathBack = this.add.rectangle(0, 0, 30, 4, 0x000000, 0.7).setStrokeStyle(1, 0xbfd8ff, 0.6).setDepth(1100);
+      this.breathBar = this.add.rectangle(0, 0, 30, 4, 0xbfd8ff, 0.9).setDepth(1101);
+    }
+  }
+
+  leaveHiding() {
+    this.hidden = false;
+    this.frozen = this.cutscene;
+    this.holdingBreath = false;
+    this.player.setVisible(true);
+    this.hx = this.hideFrom.x; this.hy = this.hideFrom.y;
+    this.lanternOn = true;
+    SFX.play('door', { vol: 0.3, rate: 1.4 });
+  }
+
+  updateHiding(dt) {
+    const show = !!this.hidden;
+    if (this.breathBar) {
+      this.breathBack.setVisible(show).setPosition(this.hx, this.hy - 20);
+      this.breathBar.setVisible(show).setPosition(this.hx - 15 + 15 * (this.breath || 0), this.hy - 20);
+      this.breathBar.width = 30 * (this.breath || 0);
+      this.breathBar.setFillStyle(this.holdingBreath ? 0xbfd8ff : 0x7a8aa0, 0.9);
+    }
+    if (!this.hidden) return;
+    const held = this.actHeld;
+    if (this.ignoreHold) { if (!held) this.ignoreHold = false; return; }
+    if (held) this.holdTime += dt;
+    else {
+      if (this.holdTime > 0 && this.holdTime < 0.25 && !this.cutscene) { this.holdTime = 0; this.leaveHiding(); return; }
+      this.holdTime = 0;
+    }
+    this.breathLock = Math.max(0, this.breathLock - dt);
+    this.holdingBreath = held && this.holdTime >= 0.25 && this.breathLock <= 0;
+    if (this.holdingBreath) {
+      this.breath -= dt / NIGHT.breathSeconds;
+      if (this.breath <= 0) { this.breath = 0; this.holdingBreath = false; this.breathLock = 2; SFX.play('gasp', { vol: 0.8 }); this.gasped = true; }
+    } else {
+      this.breath = Math.min(1, this.breath + dt / 3);
+    }
+  }
+
+  // Holy water: when it's close, ACT throws a splash that drives it back.
+  trySplash(x, y) {
+    const F = SaveGame.state.flags;
+    if (!(F.vials > 0)) return false;
+    F.vials--;
+    SFX.play('rustle', { vol: 0.6, rate: 1.6 });
+    SFX.play('growl', { vol: 0.9, rate: 1.3 });
+    const s = this.add.circle(x, y, 6, 0xbfe0ff, 0.8).setDepth(1050);
+    this.tweens.add({ targets: s, scale: 3, alpha: 0, duration: 500, onComplete: () => s.destroy() });
+    this.say(`Holy water! It recoils. (Vials left: ${F.vials})`, 2500);
+    return true;
+  }
+
+  // The thing itself, walked through a scene by the script (never by its brain).
+  makeIntruder(x, y) {
+    const c = this.add.container(x, y).setDepth(16);
+    const g = this.add.graphics();
+    g.fillStyle(0x0a0806, 1);
+    g.fillRect(-7, -22, 14, 22).fillRect(-6, -2, 4, 6).fillRect(2, -2, 4, 6).fillCircle(0, -25, 6);
+    g.fillTriangle(-6, -27, -3, -29, -9, -36).fillTriangle(6, -27, 3, -29, 9, -36);
+    g.fillRect(-11, -20, 4, 14).fillRect(7, -20, 4, 14);
+    const eyes = this.add.graphics();
+    eyes.fillStyle(0xff2a1a, 1).fillRect(-4, -26, 3, 1).fillRect(1, -26, 3, 1);
+    c.add([g, eyes]);
+    return c;
+  }
+
+  // A face at a window, from outside: someone it has taken, with red eyes.
+  faceAt(id, tx, ty) {
+    this.cast({ [id]: [tx, ty] });
+    this.npcs[id].redEyes();
+    this.glow = [...(this.glow || []), id];
+    return this.npcs[id];
+  }
+
   // A flask of lamp oil to pick up.
   oilFlask(tx, ty, amount = 0.35) {
     const p = tileCentre(tx, ty);
@@ -415,6 +545,12 @@ class ChapterScene extends FieldScene {
         else if (o.tile[1] === 7) { g.fillStyle(0x8a5a30, 1).fillRect(x - 1, y - 13, 3, 13); } // front door, swung open onto the step
         else { g.fillStyle(0x8a5a30, 1).fillRect(x + T, y - 1, 13, 3); }                     // back door, swung open onto the porch
       } else {
+        if (this.has('boarded:' + id)) {
+          // boarded up for the siege
+          g.fillStyle(0x7a5a34, 1).fillRect(x, y + 3, T, 3).fillRect(x, y + 8, T, 3);
+          g.fillStyle(0x3a2a18, 1).fillRect(x + 3, y + 4, 1, 1).fillRect(x + 12, y + 9, 1, 1);
+          continue;
+        }
         // open windows show the night through them; locked ones have their latch down and curtains drawn
         g.fillStyle(locked ? 0x5a3030 : 0x0a1018, 1).fillRect(x + 2, y + 3, 12, 8);
         if (locked) g.fillStyle(0x7a4040, 1).fillRect(x + 7, y + 3, 2, 8);
@@ -538,13 +674,15 @@ class ChapterScene extends FieldScene {
     if (this.inRoom('station')) return { ambient: 0.2, tint: [10, 24, 28], lights }; // strip lights
     if (this.inRoom('graveyard')) return { ambient: 0.3, tint: [40, 42, 50], lights }; // overcast
     if (this.dusk) return { ambient: 0.45, tint: [60, 24, 6], lights };
+    if (this.storm && !this.night) return { ambient: this.inRoom('house') ? 0.35 : 0.45, tint: [26, 30, 38], lights };
     // By day the corn hides anything more than a few tiles away.
     if (!this.night && this.inRoom('field')) return { ambient: 0.72, tint: [40, 42, 16], lights, radius: 3.5 * T };
     if (!this.night) return { ambient: 0, tint: [0, 0, 0], lights };
     if (this.inRoom('house')) {
       if (this.powerOn) return { ambient: 0.3, tint: [30, 16, 4], lights };
       // moonlight through the open back door, so you can find it in the dark
-      if (!this.locks.has('backDoor')) lights.push({ x: 25 * T + 4, y: 11 * T + 8, r: 22 });
+      if (!this.locks.has('backDoor') && !this.lamps) lights.push({ x: 25 * T + 4, y: 11 * T + 8, r: 22 });
+      for (const l of this.litLamps()) lights.push({ x: l.x, y: l.y, r: 30 + 40 * l.fuel });
       return { ambient: 0.82, tint: [3, 5, 14], lights };
     }
     // From outside, the lit windows glow.
@@ -599,6 +737,12 @@ class ChapterScene extends FieldScene {
     this.dt = dt;
     this.waiters = this.waiters.filter(w => { if (w.fn()) { w.res(); return false; } return true; });
     this.updateCamera();
+    this.updateHiding(dt);
+    this.updateLamps(dt);
+    if (this.splashTarget && Controls.actPressed && !this.hidden) {
+      const t = this.splashTarget;
+      if (Phaser.Math.Distance.Between(this.hx, this.hy, t.x, t.y) < 3 * T && this.trySplash(t.x, t.y)) { this.splashed = true; Controls.actPressed = false; }
+    }
     this.updateInteract();
     this.updateMarkers();
     const L = this.lighting();
