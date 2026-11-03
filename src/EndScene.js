@@ -97,7 +97,14 @@ class EndScene extends Phaser.Scene {
       { lines: ['"Mr Cole, what inspired your new novel, Stay Away from the Cornfield?"', '"Just a visit to my father\'s farm."', jean ? 'Under the table, Jean holds his hand.' : 'Beside him, an empty chair.'] },
       { lines: ['If only they knew, he thinks.', 'If only they knew.'] },
     ];
-    if (remembered) cards.push({ lines: ['Afterwards, Ruth Hale stands and reads twelve names aloud.', names.join(', ') + '.', "Her brother's name is last.", 'They are not forgotten any more.'] });
+    if (remembered) {
+      // Ruth reads them out, one by one, and who they were.
+      const read = (list) => list.map(n => n + (VICTIM_NOTES[n] ? ', ' + VICTIM_NOTES[n] : '') + '.').join('  ');
+      cards.push({ lines: ['Afterwards, Ruth Hale stands up.', '"There were twelve of them. Nobody came looking for them. So I will say their names."'] });
+      cards.push({ lines: [read(names.slice(0, 6))] });
+      cards.push({ lines: [read(names.slice(6, 11)), read(names.slice(11))] });
+      cards.push({ lines: ['They are not forgotten any more.'] });
+    }
     cards.push({ bg: '#20180c', lines: ['Years later, a new farmer ploughs the field.', 'The plough turns up a carved stone.'] });
     cards.push({ title: true, lines: ['STAY AWAY FROM\nTHE CORNFIELD', 'The End', 'Ending: ' + ending + (remembered ? ' (the true ending)' : '')] });
 

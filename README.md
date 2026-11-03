@@ -225,7 +225,22 @@ Day 1 and Night 1 are above. Added in this build:
 - **Remembered** (all 12 names found): after the interview, Ruth Hale reads the twelve names aloud, her brother's last.
 - Every ending closes on the same sting: years later, a new farmer ploughs the field and turns up a carved stone.
 
-**The victims' names are placeholders** (`VICTIMS` at the top of `src/chapters.js`). Replace them with the real ones, and keep Ruth's brother last.
+**The victims** (`VICTIMS` and `VICTIM_NOTES` at the top of `src/chapters.js`). These are farmhands and drifters nobody came looking for. Ruth reads each one out with who he was:
+
+| Name | Who he was | Found |
+|---|---|---|
+| Walt Ainsley | harvest hand | the back of the photograph |
+| Eddie Morrow | played the harmonica | the back of the photograph |
+| Joseph Kell | Pa's hired man | the back of the photograph |
+| Abel Ruiz | came for the picking | Ma's diary |
+| Ned Calloway | stayed one summer | Ma's diary |
+| Thomas Rook | slept in the Jacobs barn | Ma's diary |
+| Harlan Pike | mended fences | Pa's ledger |
+| Micah Dunn | sixteen years old | Pa's ledger |
+| Owen Lacey | walked in from the railway | Pa's ledger |
+| Luca Benedetti | sent his wages home | Henry's letter |
+| Frank Toller | the Jacobs' cattle hand | Henry's letter |
+| Samuel Hale | Ruth's brother | Day 6 (Pa) and Pa's ledger |
 
 ## Controls
 - **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it (at night). **NOTEBOOK** is at the top right. In dialogue, tap anywhere to continue, or tap a choice. To face a direction without walking far, nudge the joystick that way.

@@ -5,15 +5,31 @@
 // start: where Michael begins (tile). night: true for nights (lantern, the
 // creature). reach: the tile column it can't go past. lures: whether it may
 // try to lure you.
-// The Circle's twelve victims, for the Remembered ending. Ruth Hale's
-// brother is last. PLACEHOLDER NAMES: replace them with the real ones.
+// The Circle's twelve victims, for the Remembered ending: farmhands and
+// drifters nobody came looking for. Ruth Hale's brother is last.
 const VICTIMS = [
-  'Tom Avery', 'Luis Ortega', 'Danny Shore',      // on the back of the photograph
-  'Ike Mercer', 'Billy Crane', 'Joseph Wade',     // in Ma's diary
-  'Arno Fisk', 'Will Tanner', 'Eli Brook',        // in Pa's ledger
-  'Frank Doyle', 'Sam Kessler',                   // on the back of Henry's letter
-  'Samuel Hale',                                  // Ruth's brother (Pa names him on Day 6)
+  'Walt Ainsley', 'Eddie Morrow', 'Joseph Kell',      // on the back of the photograph
+  'Abel Ruiz', 'Ned Calloway', 'Thomas Rook',         // in Ma's diary
+  'Harlan Pike', 'Micah Dunn', 'Owen Lacey',          // in Pa's ledger
+  'Luca Benedetti', 'Frank Toller',                   // on the back of Henry's letter
+  'Samuel Hale',                                      // Ruth's brother (Pa names him on Day 6)
 ];
+
+// Who each of them was, as Ruth reads them out.
+const VICTIM_NOTES = {
+  'Walt Ainsley': 'harvest hand',
+  'Eddie Morrow': 'who played the harmonica',
+  'Joseph Kell': "Walter's hired man",
+  'Abel Ruiz': 'who came for the picking',
+  'Ned Calloway': 'who stayed one summer',
+  'Thomas Rook': 'who slept in the Jacobs barn',
+  'Harlan Pike': 'who mended fences',
+  'Micah Dunn': 'sixteen years old',
+  'Owen Lacey': 'who walked in from the railway',
+  'Luca Benedetti': 'who sent his wages home',
+  'Frank Toller': 'the Jacobs\' cattle hand',
+  'Samuel Hale': 'my brother',
+};
 
 const CHAPTERS = {
 

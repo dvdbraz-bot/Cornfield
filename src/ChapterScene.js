@@ -35,6 +35,7 @@ class ChapterScene extends FieldScene {
     const S = SaveGame.state;
     this.chapterId = S.chapter;
     this.ch = CHAPTERS[S.chapter];
+    S.names = (S.names || []).filter(n => VICTIMS.includes(n)); // (drops the old placeholder names from earlier saves)
     Unlocks.unlock(this.chapterId);
     this.night = !!this.ch.night;
     const start = (this.resuming && S.x != null) ? { x: S.x, y: S.y } : tileCentre(...this.ch.start);
