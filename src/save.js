@@ -14,6 +14,7 @@ const SaveGame = (() => {
       notes: [],         // objectives: { id, text, done }
       clues: [],         // { id, title, text }
       items: [],         // e.g. 'rosary'
+      names: [],         // the Circle's victims, as Michael finds them (12 for the Remembered ending)
       stones: 12,        // stones left in the ring
       savedAt: null,
     };
@@ -68,7 +69,8 @@ const CHAPTER_NAMES = {
   night5: 'Night 5: Holy water',
   day6: 'Day 6: The whole truth',
   night6: 'Night 6: Faces at the window',
-  day7: 'Day 7: Come and get me',
+  day7: 'Day 7: The last day',
+  finale: 'Finale: Come and get me',
 };
 
 // Which chapters have been reached, for Chapters on the start screen. Kept

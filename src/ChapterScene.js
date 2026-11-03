@@ -166,6 +166,66 @@ class ChapterScene extends FieldScene {
 
   addItem(id) { if (!SaveGame.state.items.includes(id)) SaveGame.state.items.push(id); }
   removeItem(id) { SaveGame.state.items = SaveGame.state.items.filter(i => i !== id); }
+
+  // The names of the Circle's victims (for the Remembered ending).
+  addNames(names, where) {
+    const S = SaveGame.state;
+    const fresh = names.filter(n => !S.names.includes(n));
+    if (!fresh.length) return;
+    S.names.push(...fresh);
+    this.time.delayedCall(800, () => this.say(`Names, ${where}: ${fresh.join(', ')}. (${S.names.length} of 12 in the notebook)`, 5000));
+  }
+
+  // At the ring, it circles him, working round towards his back. Face it
+  // with the lantern and it is pushed back out. During the prayer, if it
+  // stays right behind him too long, it is over.
+  ritualOrbit() {
+    const cr = this.creature;
+    this.behindTime = 0;
+    if (Phaser.Math.Distance.Between(cr.x, cr.y, this.hx, this.hy) > 8 * T) { cr.x = this.hx + 6 * T; cr.y = this.hy; }
+    this.waitFor(() => {
+      if (!this.ritualCircling || this.state !== 'night') return true;
+      const dt = this.dt || 1 / 30;
+      const dx = cr.x - this.hx, dy = cr.y - this.hy;
+      let r = Math.hypot(dx, dy) || 1;
+      let a = Math.atan2(dy, dx);
+      const fl = Math.hypot(this.fx, this.fy) || 1, fx = this.fx / fl, fy = this.fy / fl;
+      const front = (dx / r) * fx + (dy / r) * fy; // 1 = in front of him, -1 = behind him
+      const lit = this.lanternOn && front > 0.55;
+      const delta = Phaser.Math.Angle.Wrap(Math.atan2(-fy, -fx) - a);
+      a += Math.sign(delta) * Math.min(Math.abs(delta), (lit ? 0.4 : 0.9) * dt);
+      const rT = lit ? 5.5 * T : (this.prayer ? 2.3 * T : 4.5 * T);
+      r += (rT - r) * Math.min(1, (lit ? 2 : 0.8) * dt);
+      cr.x = this.hx + Math.cos(a) * r;
+      cr.y = this.hy + Math.sin(a) * r;
+      if (this.behindTime < 0) this.behindTime += dt; // grace
+      else if (this.prayer && front < -0.5 && r < 3 * T) this.behindTime += dt;
+      else this.behindTime = Math.max(Math.min(this.behindTime, 0), this.behindTime - dt);
+      if (this.behindTime > (this.praying ? 1.2 : 1.8)) { this.ritualCaught(); return true; }
+      return false;
+    });
+  }
+
+  async ritualCaught() {
+    if (this.state !== 'night') return;
+    this.state = 'caught';
+    this.ritualCircling = false;
+    this.turnOnly = false;
+    await this.killFromBehind();
+    this.scene.start('End', { mode: 'caught-save' });
+  }
+
+  // A fire at (x, y): flickering flames that light the dark.
+  makeFire(x, y) {
+    const f = this.add.container(x, y).setDepth(17);
+    for (let i = 0; i < 5; i++) {
+      const fl = this.add.triangle((i - 2) * 3, 0, -2, 0, 2, 0, 0, -8 - (i % 2) * 4, i % 2 ? 0xffa030 : 0xff5a10);
+      f.add(fl);
+      this.tweens.add({ targets: fl, scaleY: 0.6, duration: 120 + i * 30, yoyo: true, repeat: -1 });
+    }
+    this.extraLights = [...(this.extraLights || []), { x, y, r: 60 }];
+    return f;
+  }
   hasItem(id) { return SaveGame.state.items.includes(id); }
   flag(k, v = true) { SaveGame.state.flags[k] = v; }
   has(k) { return !!SaveGame.state.flags[k]; }
@@ -589,7 +649,7 @@ class ChapterScene extends FieldScene {
     add(at(4, 10, 8, 16), 22, () => this.say('The old Phillips TV on its white wall unit.', 3000));
     add(at(9, 24), 22, () => this.say('His old clothes. Too small now.', 2500), () => !stepNear(at(9, 24)));
     add(at(15, 20, 16, 16), 26, () => this.say("Jenny's bed. Same pink cover since she was twelve.", 3000));
-    add(at(18, 19), 22, () => this.say("Pa's cupboard. Shut tight.", 2500));
+    add(at(18, 19), 22, () => this.say("Pa's cupboard. Shut tight.", 2500), () => !stepNear(at(18, 19)));
     add(at(4, 30), 24, () => this.say(this.has('cupboardOpen') ? 'The cupboard stands open. He does not want to look in it again.' : 'The old cupboard. Locked. It was always locked. He and Jenny were never allowed near it.', 4500), () => !stepNear(at(4, 30)));
     add(at(17, 31), 24, () => this.say('The generator. Pa keeps it for when storms take the power out.', 3000), () => !stepNear(at(17, 31)));
     add(at(29, 24), 22, () => this.say("Spike's kennel.", 2000));

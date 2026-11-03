@@ -209,14 +209,34 @@ class UIScene extends Phaser.Scene {
       for (const n of done.slice(-6).reverse()) { const t = this.add.text(36, y, '✓  ' + n.text, faint); p.add(t); y += t.height + 3; }
       if (S.items.length) p.add(this.add.text(36, 230, 'Carrying: ' + S.items.join(', '), faint));
     } else if (name === 'Clues') {
+      // Newest first. Tap Clues again to turn the page.
       let y = 42;
+      const names = S.names || [];
+      if (names.length) {
+        const t = this.add.text(36, y, `The forgotten (${names.length} of 12): ${names.join(', ')}`, { ...ink, color: '#2a4a2a' });
+        p.add(t);
+        y += t.height + 6;
+      }
       if (!S.clues.length) p.add(this.add.text(36, y, 'Nothing yet.', faint));
-      for (const c of S.clues) {
+      const clues = [...S.clues].reverse();
+      const pages = [[]];
+      let h = y;
+      for (const c of clues) {
+        const t1 = this.add.text(0, 0, c.title, { ...ink, color: '#6a2a1a' }), t2 = this.add.text(0, 0, c.text, ink);
+        const need = t1.height + t2.height + 6;
+        t1.destroy(); t2.destroy();
+        if (h + need > 232 && pages[pages.length - 1].length) { pages.push([]); h = 42; }
+        pages[pages.length - 1].push(c); h += need;
+      }
+      this.cluePage = (this.cluePage || 0) % pages.length;
+      if (this.cluePage > 0) y = 42;
+      for (const c of pages[this.cluePage]) {
         const t1 = this.add.text(36, y, c.title, { ...ink, fontSize: '10px', color: '#6a2a1a' });
         const t2 = this.add.text(36, y + t1.height, c.text, ink);
         p.add([t1, t2]);
         y += t1.height + t2.height + 6;
       }
+      if (pages.length > 1) p.add(this.add.text(this.scale.width - 36, 236, `page ${this.cluePage + 1} of ${pages.length}: tap Clues for more`, { ...faint, fontSize: '8px', wordWrap: null }).setOrigin(1, 0));
     } else if (name === 'Map') {
       this.drawMapSketch(p);
     } else {
@@ -275,7 +295,11 @@ class UIScene extends Phaser.Scene {
     const hit = (b) => p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
     if (hit(this.nbClose)) { this.toggleNotebook(); return; }
     const t = this.nbTabs.find(hit);
-    if (t) this.showTab(t.name);
+    if (t) {
+      if (t.name === 'Clues' && this.nbTab === 'Clues') this.cluePage = (this.cluePage || 0) + 1; // next page
+      else if (t.name === 'Clues') this.cluePage = 0;
+      this.showTab(t.name);
+    }
   }
 
   // ---------- touch ----------

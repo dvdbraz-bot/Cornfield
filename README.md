@@ -140,7 +140,7 @@ Day 1 and Night 1 are above. Added in this build:
 - Later, she slips out alone. Jason stands on the lawn, whole and smiling, calling her name.
 - She holds him. His eyes turn red. He turns her round, and she can't move. Then the hand.
 
-## Milestone 6 (in progress): Days 4-7, the finale and the endings
+## Milestone 6: Days 4-7, the finale and the endings ✅
 
 **Day 4: On the lawn**
 1. Dawn: Jean screams. Jason and Jenny lie on the lawn by the porch, not in the corn, so its reach has grown.
@@ -190,7 +190,42 @@ Day 1 and Night 1 are above. Added in this build:
   - **Holy water:** if it's within 3 tiles, ACT throws a vial and drives it back (3 vials).
 - **Near dawn,** Pa walks out to the edge of the field with his shotgun. If you forgave him, he says "Look after Jean, son." first. Then "Time to join the master." One shot. His book can now be destroyed without anyone else dying.
 
-The next chapter is Day 7, the last day.
+**Day 7: The last day**
+- Gather what Ma's diary says it takes, in any order:
+  - refill the holy water vials (attic)
+  - petrol (shed)
+  - matches (kitchen)
+  - Ma's crucifix (Pa's cupboard)
+  - Ma's rosary (the drawer in Michael's old room)
+- Dunk Pa's book, and the field screams again.
+- **(Optional) The names of the Circle's victims**, for the true ending, hidden in what they left behind:
+  - the back of the photograph in the garage cupboard (3)
+  - Ma's diary in the attic (3)
+  - Pa's ledger under his mattress (3, plus Ruth's brother)
+  - the back of Henry's letter on the kitchen counter (2)
+  - Pa names Ruth's brother, Samuel, on Day 6.
+
+  The notebook's Clues tab counts them: "The forgotten (n of 12)".
+
+**Finale: Come and get me**
+1. **Into the corn with Jean** at nightfall, to the stone ring. It hunts you:
+   - It wears Pa ("Son. Come home, son."), then Jenny ("Michael. I'm scared.") as you get closer, then its own face.
+   - Keep your lantern on it, and throw holy water (ACT) when it's close.
+   - **Jean** is safe while she's close to you and in your light. Run and she falls behind, and it can take her.
+2. **At the ring** (ACT at the centre): pour the petrol over Pa's book, light it, and set down Ma's crucifix. The book bleeds.
+3. **The prayer:** hold ACT through each line of the Our Father (seven lines).
+   - While you pray you can't turn, and it circles round towards your back.
+   - Let go to turn and face it with the lantern, which pushes it back.
+   - If it stays right behind you, it's over (back to the last save).
+4. After "Amen", the book crumbles, its skin peels away, and the ground opens. The crickets begin again.
+
+**The endings** (cards, using the story's closing lines):
+- **Dawn** (Jean lives): they walk out of the corn at sunrise. A year later, an interviewer asks what inspired the novel. "Just a visit to my father's farm." *If only they knew.*
+- **Alone** (Jean was taken): the same, with an empty chair beside him.
+- **Remembered** (all 12 names found): after the interview, Ruth Hale reads the twelve names aloud, her brother's last.
+- Every ending closes on the same sting: years later, a new farmer ploughs the field and turns up a carved stone.
+
+**The victims' names are placeholders** (`VICTIMS` at the top of `src/chapters.js`). Replace them with the real ones, and keep Ruth's brother last.
 
 ## Controls
 - **Phone:** touch the left half of the screen to make a joystick appear under your thumb. Push it to the edge to run. On the right are a big **ACT** button (it glows when something can be used) and a smaller **LANTERN** button above it (at night). **NOTEBOOK** is at the top right. In dialogue, tap anywhere to continue, or tap a choice. To face a direction without walking far, nudge the joystick that way.
@@ -226,8 +261,12 @@ The next chapter is Day 7, the last day.
 - **On a computer:** double-click `index.html`.
 
 ## Next (from the design doc)
-Milestone 5 (Days 1-3) is complete. Next is Milestone 6:
-- **Days 4-7**, including the questioning, the power failure, the funeral, the garage cupboard, Pa's confession, the attic, the siege night and Pa's last walk.
-- **The finale and the three endings.**
+**The whole story is playable in grey-box**, from the prologue to all three endings.
 
-After that come the art and audio, the Android app, and Google Play.
+What's left:
+1. **Polish the concept:** playtest notes, difficulty tuning, and the real victims' names.
+2. **Milestone 3 / 7: art and audio.** Placeholder art first (16 x 16 tiles, sprites, real sound effects), then the final art and audio from asset packs or an artist.
+3. **Milestone 8: the Android app.** Wrap it with Capacitor, add the icon and splash screen, and test on a cheap phone and a good one for 30 minutes to check it stays cool.
+4. **Milestone 9: Google Play.** Developer account, the 12-tester closed test for 14 days, and the age rating.
+
+Before release: remove the five-tap "unlock all chapters" testing shortcut, or keep it as a hidden extra.

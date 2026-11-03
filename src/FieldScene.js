@@ -162,6 +162,8 @@ class FieldScene extends Phaser.Scene {
       const l = Math.hypot(kx, ky);
       mx = kx / l; my = ky / l; run = k.SHIFT.isDown;
     }
+    // Rooted to the spot (praying at the ring): you can still turn to face it.
+    if (this.frozen && this.turnOnly && (mx || my)) { const l = Math.hypot(mx, my); this.fx = mx / l; this.fy = my / l; }
     if (this.frozen) { mx = 0; my = 0; }
 
     this.moving = mx !== 0 || my !== 0;
@@ -408,9 +410,26 @@ class FieldScene extends Phaser.Scene {
     }
   }
 
+  // It wears its dead: 'walter', 'jenny'... (a big, wrong version of them,
+  // with red eyes), or null for its own shape.
+  setCreatureSkin(id) {
+    if (this.cSkin) { this.cSkin.destroy(); this.cSkin = null; }
+    this.skinId = id;
+    if (!id) return;
+    const look = CAST[id];
+    const c = this.add.container(0, 0).setDepth(16).setScale(1.6);
+    c.add(this.add.rectangle(0, -6, 9, 10, look.body));
+    c.add(this.add.circle(0, -12, 3.5, look.head));
+    c.add(this.add.rectangle(0, -15, 7, 3, look.hair));
+    c.add(this.add.rectangle(-1.5, -12, 1, 1, 0xff2010));
+    c.add(this.add.rectangle(1.5, -12, 1, 1, 0xff2010));
+    this.cSkin = c;
+  }
+
   drawCreature(time) {
     const cr = this.creature;
-    if (cr.invisible) { this.cBody.setVisible(false); this.cEyes.setAlpha(0); return; }
+    if (this.cSkin) this.cSkin.setVisible(!cr.invisible).setPosition(Math.round(cr.x), Math.round(cr.y + 6));
+    if (cr.invisible || this.cSkin) { this.cBody.setVisible(false); this.cEyes.setAlpha(0); return; }
     this.cBody.setVisible(true);
     this.cBody.setPosition(Math.round(cr.x), Math.round(cr.y + 6));
     this.cEyes.setPosition(Math.round(cr.x), Math.round(cr.y - 13));

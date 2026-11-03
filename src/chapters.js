@@ -5,6 +5,16 @@
 // start: where Michael begins (tile). night: true for nights (lantern, the
 // creature). reach: the tile column it can't go past. lures: whether it may
 // try to lure you.
+// The Circle's twelve victims, for the Remembered ending. Ruth Hale's
+// brother is last. PLACEHOLDER NAMES: replace them with the real ones.
+const VICTIMS = [
+  'Tom Avery', 'Luis Ortega', 'Danny Shore',      // on the back of the photograph
+  'Ike Mercer', 'Billy Crane', 'Joseph Wade',     // in Ma's diary
+  'Arno Fisk', 'Will Tanner', 'Eli Brook',        // in Pa's ledger
+  'Frank Doyle', 'Sam Kessler',                   // on the back of Henry's letter
+  'Samuel Hale',                                  // Ruth's brother (Pa names him on Day 6)
+];
+
 const CHAPTERS = {
 
   // ---------------- Day 1: Homecoming ----------------
@@ -1399,7 +1409,7 @@ const CHAPTERS = {
           ['PA', 'You want the truth, Michael. All of it.'],
           ['PA', 'The souls we gave it. They weren\'t animals. They were men.'],
           ['PA', 'Farmhands. Drifters. Men nobody came looking for.'],
-          ['PA', "Ruth Hale's brother was one of them."],
+          ['PA', "Ruth Hale's brother, Samuel, was one of them."],
           [null, 'Jean puts her hand over her mouth.'],
           ['PA', 'And your mother.'],
           ['PA', 'She found out. She found the books. She was going to stop it.'],
@@ -1410,6 +1420,7 @@ const CHAPTERS = {
         await c.talk(ch === 0
           ? [['PA', '...Thank you, son.'], [null, 'He cries, without a sound.']]
           : [[null, 'Pa nods, as if that is fair. He does not say another word all day.']]);
+        c.addNames(['Samuel Hale'], 'from Pa');
         c.clue('truth', 'The whole truth', "The Circle's victims were farmhands and drifters nobody came looking for. Ruth Hale's brother was one of them. It killed Ma in the corn when she found out, and Pa called it a farm accident.");
         await c.talk([
           ['JEAN', "Tonight it'll come to the house. We need to be ready."],
@@ -1700,6 +1711,296 @@ const CHAPTERS = {
         c.clue('pa', 'Pa', "He walked to the edge of the field with his shotgun. \"Time to join the master.\" With him gone, his book can be destroyed and no one else will die with it.");
         c.complete('siege');
         await c.endChapter('day7');
+      },
+    ],
+  },
+  // ---------------- Day 7: The last day ----------------
+  day7: {
+    start: [19, 13],
+    setup(c) {
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+      c.makeCar('truck', 13 * T, 5.5 * T, 90);
+      if (!c.hasItem("Pa's black book")) c.addItem("Pa's black book");
+      // The names, hidden in what they left behind (optional: for the true ending).
+      const nameSpot = (tx, ty, line, names, where) => {
+        const p = tileCentre(tx, ty);
+        const it = { x: p.x, y: p.y, r: 24, step: true, when: () => true, act: async () => {
+          c.interactables = c.interactables.filter(o => o !== it);
+          await c.talk([[null, line]]);
+          c.addNames(names, where);
+          c.objective('names', `(Optional) Find the names of the men the Circle gave it: ${SaveGame.state.names.length} of 12.`);
+        } };
+        c.interactables.push(it);
+      };
+      nameSpot(4, 30, 'The photograph from the cupboard. On the back, in pencil, three names, each one crossed out.', VICTIMS.slice(0, 3), 'on the back of the photograph');
+      nameSpot(14, 50, "Ma's diary again. On the last page: \"The men they gave it. Someone should remember them.\" Three names.", VICTIMS.slice(3, 6), "in Ma's diary");
+      nameSpot(24, 21, "Under Pa's mattress, where the key was: a ledger. Dates, and men's names, and money paid to no one.", [...VICTIMS.slice(6, 9), 'Samuel Hale'], "in Pa's ledger");
+      nameSpot(22, 8, "Henry's letter, spread out on the counter. On the back, two more names, and \"God forgive us.\"", VICTIMS.slice(9, 11), "on the back of Henry's letter");
+    },
+    steps: [
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(19, 13, 0, -1);
+        c.cast({ jean: [17, 12] });
+        await c.wait(800);
+        await c.talk([
+          [null, 'Day 7. The water goes down. The sun comes out, as if nothing had happened.'],
+          [null, 'Pa lies under a sheet on the porch. There is still no way into town.'],
+          ['JEAN', 'The diary. What does it say we need?'],
+          ['MICHAEL', 'Holy water. Fire. And prayer.'],
+          ['MICHAEL', "And Pa's book. With him gone, nobody else dies when it burns."],
+          ['JEAN', 'Then we finish it. Tonight. At the ring.'],
+        ]);
+        c.setCutscene(false);
+        c.objective('names', `(Optional) Find the names of the men the Circle gave it: ${SaveGame.state.names.length} of 12.`);
+        c.time.delayedCall(4000, () => c.say("Somewhere in what they left behind (the photograph, Ma's diary, Pa's room, Henry's letter) are the names of the men they gave it.", 6000));
+      },
+
+      // Gather what the diary says, and dunk Pa's book.
+      async (c) => {
+        c.cast({ jean: [17, 12] });
+        const F = SaveGame.state.flags;
+        const jobs = [];
+        const fetch = (id, text, tx, ty, item, line) => jobs.push((async () => {
+          if (c.hasItem(item)) return;
+          c.objective(id, text);
+          const p = tileCentre(tx, ty);
+          await c.waitAct(p.x, p.y, 24);
+          c.addItem(item);
+          await c.talk([[null, line]]);
+          c.complete(id);
+        })());
+        jobs.push((async () => {
+          if (F.vials >= 3) return;
+          c.objective('vials7', 'Refill the holy water vials at the barrel in the attic.');
+          await c.waitAct(11 * T + 8, 52 * T + 8, 26);
+          F.vials = 3;
+          c.say('Three vials of holy water.', 2500);
+          c.complete('vials7');
+        })());
+        const can = c.add.rectangle(18 * T + 8, 32 * T + 8, 7, 9, 0xb02a1a).setDepth(14);
+        fetch('petrol', 'Petrol, from the shed.', 18, 32, 'petrol', 'A red can of petrol, half full. It sloshes.');
+        jobs[jobs.length - 1].then(() => can.destroy());
+        fetch('matches', 'Matches, from the kitchen.', 15, 8, 'matches', 'A box of matches from the drawer by the stove.');
+        fetch('crucifix', "Ma's crucifix. (Pa kept her things in his cupboard.)", 18, 19, "Ma's crucifix", "Ma's crucifix, wrapped in one of her scarves.");
+        jobs.push((async () => {
+          if (c.hasItem('rosary')) return;
+          c.objective('rosary7', "Ma's rosary, from the drawer in your old room.");
+          await c.waitFor(() => c.hasItem('rosary'));
+          c.complete('rosary7');
+        })());
+        jobs.push((async () => {
+          c.objective('dunk7', "Dunk Pa's black book in the holy water.");
+          await Promise.all(jobs.slice(0, 1)); // the barrel is in the attic: any order is fine
+          await c.waitAct(11 * T + 8, 52 * T + 8, 26);
+          c.setCutscene(true);
+          await c.talk([[null, "He holds Pa's book under the water. It hisses."]]);
+          SFX.play('scream', { vol: 1, rate: 0.5 });
+          c.cameras.main.shake(1000, 0.02);
+          SFX.vibrate([300, 100, 300]);
+          await c.wait(1500);
+          await c.talk([[null, 'Out in the field, the scream again. Longer, this time.'], ['JEAN', 'It knows.']]);
+          c.setCutscene(false);
+          c.complete('dunk7');
+        })());
+        await Promise.all(jobs);
+      },
+
+      async (c) => {
+        c.setCutscene(true);
+        await c.fadeOut(1000);
+        c.dusk = true;
+        c.placeMichael(26, 14, 1, 0);
+        c.cast({ jean: [26, 15] });
+        await c.fadeIn(1000);
+        await c.talk([
+          [null, 'Evening, on the porch. The corn is very still.'],
+          ['JEAN', "It'll be dark soon."],
+          ['MICHAEL', 'Then we go now.'],
+        ]);
+        await c.endChapter('finale');
+      },
+    ],
+  },
+
+  // ---------------- Finale: Come and get me ----------------
+  finale: {
+    night: true,
+    reach: 0,
+    lures: false,
+    oil: 1,
+    start: [27, 15],
+    setup(c) {
+      const F = SaveGame.state.flags;
+      if (F.vials === undefined) F.vials = 3;
+      ["Pa's black book", 'petrol', 'matches', "Ma's crucifix", 'rosary'].forEach(i => c.addItem(i));
+      c.makeCar('red', PARK_RED.x, PARK_RED.y, 90);
+      c.makeCar('beetle', PARK_BEETLE.x, PARK_BEETLE.y, 90);
+      c.makeCar('truck', 13 * T, 5.5 * T, 90);
+      c.powerOn = false;
+      c.flag('cornAtNight');
+    },
+    steps: [
+      async (c) => {
+        c.setCutscene(true);
+        c.placeMichael(27, 15, 1, 0);
+        c.cast({ jean: [26, 15] });
+        await c.wait(800);
+        await c.talk([
+          [null, 'Nightfall.'],
+          ['JEAN', 'Stay close to me.'],
+          ['MICHAEL', 'Stay behind me. Stay in the light.'],
+        ]);
+        c.setCutscene(false);
+        c.objective('ring', 'Get Jean to the stone ring at the centre of the field. Keep your lantern on it. Never let it behind you. (ACT throws holy water when it is close.)');
+        c.time.delayedCall(4500, () => c.say("Jean is safe while she's close to you and in your light. Don't run: she can't keep up.", 5000));
+      },
+
+      // Into the corn. It wears Pa, then Jenny, then its own face.
+      async (c) => {
+        const R = c.map.RING, cr = c.creature;
+        const F = SaveGame.state.flags;
+        if (!F.jeanDead) { if (!c.npcs.jean) c.cast({ jean: [26, 15] }); c.follow('jean'); }
+        c.setCreatureSkin('walter');
+        cr.x = 36 * T; cr.y = 14 * T;
+        cr.startHunt();
+        let voiceT = 3;
+        c.splashTarget = cr;
+        await c.waitFor(() => {
+          const dt = c.dt || 1 / 30;
+          const dRing = Phaser.Math.Distance.Between(c.hx, c.hy, R.x, R.y);
+          const want = dRing > 15 * T ? 'walter' : dRing > 7 * T ? 'jenny' : null;
+          if (want !== c.skinId) c.setCreatureSkin(want);
+          voiceT -= dt;
+          if (voiceT <= 0 && cr.state === 'hunt') {
+            voiceT = 7;
+            const line = c.skinId === 'walter' ? 'Son. Come home, son.' : c.skinId === 'jenny' ? "Michael. I'm scared." : null;
+            if (line) { SFX.speakLure(line); c.bubble(cr.x, cr.y - 30, line, 2500, null, true); }
+            else SFX.play('growl', { vol: 0.6, pan: c.panTo(cr.x) });
+          }
+          if (c.splashed) { c.splashed = false; cr.startRetreat(); }
+          // It takes Jean if it reaches her, unless she's close to Michael in the lantern light.
+          const j = c.npcs.jean;
+          const jeanSafe = j && c.lanternOn && Phaser.Math.Distance.Between(j.x, j.y, c.hx, c.hy) < 3 * T;
+          if (j && !jeanSafe && !F.jeanDead && cr.state === 'hunt' && Phaser.Math.Distance.Between(cr.x, cr.y, j.x, j.y) < 16) {
+            F.jeanDead = true;
+            c.unfollow('jean');
+            c.cast({ jean: null });
+            SFX.play('scream', { vol: 0.9, rate: 1.4 });
+            c.say('Jean!', 3000);
+            cr.startRetreat();
+          }
+          return dRing < 2.5 * T && c.state === 'night';
+        });
+        c.splashTarget = null;
+        c.saveNow();
+      },
+
+      // The ring. Petrol, fire, the crucifix.
+      async (c) => {
+        const R = c.map.RING, cr = c.creature;
+        c.setCreatureSkin(null);
+        cr.state = 'ritual';
+        cr.hushFor(9999);
+        const F = SaveGame.state.flags;
+        if (!F.jeanDead) { c.unfollow('jean'); c.cast({ jean: [51, 22] }); }
+        c.ritualCircling = true;
+        c.ritualOrbit(); // it circles while he works
+        c.setCutscene(true);
+        await c.talk([[null, `The ring. ${SaveGame.state.stones} stones left, black in the lantern light. Something circles in the corn.`]]);
+        c.setCutscene(false);
+        c.objective('ritual', "Pour the petrol over Pa's book. (ACT at the centre of the ring)");
+        await c.waitAct(R.x, R.y, 40);
+        await c.talk([[null, "He sets Pa's book in the middle of the ring and pours the petrol over it."]]);
+        c.objective('ritual', 'Light it.');
+        await c.waitAct(R.x, R.y, 40);
+        c.fire = c.makeFire(R.x, R.y);
+        SFX.play('scream', { vol: 0.9, rate: 0.6 });
+        c.cameras.main.shake(600, 0.012);
+        await c.talk([[null, 'The book catches. It burns with a sound like breathing. Out in the dark, it screams.']]);
+        c.objective('ritual', "Set down Ma's crucifix.");
+        await c.waitAct(R.x, R.y, 40);
+        await c.talk([[null, "He lays Ma's crucifix on the burning book. The book begins to bleed."]]);
+        c.complete('ritual');
+        c.saveNow();
+      },
+
+      // The prayer. Hold ACT through each line. Let go to turn and face it.
+      async (c) => {
+        const R = c.map.RING, cr = c.creature;
+        if (!c.fire) c.fire = c.makeFire(R.x, R.y);
+        if (!SaveGame.state.flags.jeanDead) c.cast({ jean: [51, 22] });
+        cr.state = 'ritual'; cr.hushFor(9999);
+        c.setCreatureSkin(null);
+        if (!c.ritualCircling) { c.ritualCircling = true; c.ritualOrbit(); }
+        const lines = [
+          'Our Father, who art in heaven, hallowed be thy name.',
+          'Thy kingdom come, thy will be done, on earth as it is in heaven.',
+          'Give us this day our daily bread,',
+          'and forgive us our trespasses, as we forgive those who trespass against us.',
+          'And lead us not into temptation, but deliver us from evil.',
+          'For thine is the kingdom, the power and the glory,',
+          'for ever and ever. Amen.',
+        ];
+        c.objective('pray', 'Pray: hold ACT through each line. Let go to turn and face it with the lantern. Never let it behind you.');
+        c.say('Hold ACT to pray. Let go to turn and face it.', 4000);
+        c.frozen = true; c.turnOnly = true;
+        // It starts out in front of him, in the light (never already behind him).
+        const fl = Math.hypot(c.fx, c.fy) || 1;
+        cr.x = c.hx + c.fx / fl * 5.5 * T; cr.y = c.hy + c.fy / fl * 5.5 * T;
+        c.behindTime = -2; // a moment's grace
+        c.prayer = { line: 0, progress: 0 };
+        const bar = c.add.rectangle(0, 0, 40, 3, 0xffe0a0).setDepth(1100).setOrigin(0, 0.5);
+        const back = c.add.rectangle(0, 0, 40, 3, 0x000000, 0.7).setDepth(1099).setOrigin(0, 0.5);
+        let shown = -1;
+        await c.waitFor(() => {
+          const P = c.prayer, dt = c.dt || 1 / 30;
+          if (c.state !== 'night') return true;
+          c.praying = c.actHeld && !Controls.dialogueOpen;
+          c.turnOnly = !c.praying;            // you can't turn while you pray
+          if (c.praying) P.progress += dt / 3.2;
+          if (P.progress >= 1) {
+            P.progress = 0; P.line++;
+            SFX.play('growl', { vol: 0.7, pan: c.panTo(cr.x) });
+            c.cameras.main.shake(150, 0.006);
+          }
+          if (P.line >= lines.length) return true;
+          if (shown !== P.line) { shown = P.line; c.ui.caption('"' + lines[P.line] + '"', 600000); }
+          back.setPosition(c.hx - 20, c.hy - 22); bar.setPosition(c.hx - 20, c.hy - 22);
+          bar.width = 40 * P.progress;
+          bar.setFillStyle(c.praying ? 0xffe0a0 : 0x8a7a5a);
+          return false;
+        });
+        bar.destroy(); back.destroy();
+        if (c.state !== 'night') return new Promise(() => {}); // caught: the end screen has it
+        c.ritualCircling = false;
+        c.turnOnly = false;
+        c.ui.caption('"...Amen."', 2500);
+        await c.wait(1500);
+
+        // It is gone.
+        c.setCutscene(true);
+        SFX.play('scream', { vol: 1, rate: 0.45 });
+        SFX.play('strike', { vol: 0.7, rate: 0.6 });
+        SFX.vibrate([400, 100, 400]);
+        c.cameras.main.shake(1500, 0.02);
+        c.cameras.main.flash(300, 255, 200, 160);
+        await c.wait(1200);
+        await c.talk([
+          [null, 'The book bleeds, and crumbles to ash.'],
+          [null, 'It screams. In the firelight its skin peels away from it, down to the bone.'],
+          [null, 'The ground opens beneath it, and it is gone.'],
+        ]);
+        cr.invisible = true;
+        cr.state = 'asleep';
+        await c.wait(1500);
+        await c.talk([[null, 'Silence. Then, one by one, the crickets begin again.']]);
+        cr.hush = false;
+        c.complete('pray');
+        await c.wait(2500);
+        await c.fadeOut(2500);
+        c.scene.start('End', { mode: 'ending' });
       },
     ],
   },
