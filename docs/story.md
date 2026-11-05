@@ -1,6 +1,6 @@
 # Stay Away from the Cornfield (short story, 2002)
 
-By David Braz. The original story the game is adapted from. The game changes some names and details: see design.md, and the README for what's built.
+By David Braz. The original story the game is adapted from (one racial slur in Chapter 8 removed from this copy). The game changes some names and details: see design.md, and the README for what's built.
 
 STAY AWAY FROM THE CORNFIELD 
 
@@ -187,7 +187,7 @@ Michael pointed to the couch. It was filled with the objects in the cupboard.
 
 "I used to belong to a cult called the AC/DC." Mr. Cole sad.
 "The AC/DC?" Michael said. 
-"It stood for After Christ Devil Comes." Mr. Cole said. "Anyway, one day we were worshipping in the centre of the cornfield. When we had finished, a scrolled had appeared on the ground. It contained the secrets on how to create and control your own demon. We followed the instructions correctly and we summoned forth the demon. We sacrificed living souls to the demon. We mainly used niggers because we considered them as inhuman. We were not sure what happened, but one day the demon went out of control. It started killing everyone in the cult. Mr. Jacobs and I were the only ones left. The bottom of the scroll told how to destroy the demon. But, there was a risk of it coming back because we didn't carry out the ritual properly." He paused for a while." We had to destroy our bibles in order to kill the demon. But, destroying the bibles would kill us as they were linked to our souls. It was the demon who killed Mr. Jacobs and our family. You told me you saw Jenny looking for Jason the other night because she thought she saw him. It was the demon luring her out. It probably took on his form and tricked her.
+"It stood for After Christ Devil Comes." Mr. Cole said. "Anyway, one day we were worshipping in the centre of the cornfield. When we had finished, a scrolled had appeared on the ground. It contained the secrets on how to create and control your own demon. We followed the instructions correctly and we summoned forth the demon. We sacrificed living souls to the demon. We mainly used [slur removed] because we considered them as inhuman. We were not sure what happened, but one day the demon went out of control. It started killing everyone in the cult. Mr. Jacobs and I were the only ones left. The bottom of the scroll told how to destroy the demon. But, there was a risk of it coming back because we didn't carry out the ritual properly." He paused for a while." We had to destroy our bibles in order to kill the demon. But, destroying the bibles would kill us as they were linked to our souls. It was the demon who killed Mr. Jacobs and our family. You told me you saw Jenny looking for Jason the other night because she thought she saw him. It was the demon luring her out. It probably took on his form and tricked her.
 There was a moment of silence.
 "What about the rocks?" Michael asked.
 "They were just threats."
