@@ -287,5 +287,6 @@ What's left:
 Before release: remove the five-tap "unlock all chapters" testing shortcut, or keep it as a hidden extra.
 
 ## For future sessions
+- `docs/story.md` is the original 2002 short story. `docs/design.md` is the game design document, with its diagrams in `docs/media/`. David's original Word files are in `docs/` too.
 - `CLAUDE.md` holds the working notes for Claude: how David likes to work, the workflow, lessons learned, and what's next.
 - `tests/` holds the automated playthroughs. Run them all with `bash tests/run-all.sh` (needs Playwright, which Claude's cloud sessions already have).
