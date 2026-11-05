@@ -6,6 +6,7 @@ Read README.md first: it records everything that's built, chapter by chapter, an
 - David Braz, the author. The game is adapted from his 2002 short story and his design document ("Stay Away from the Cornfield — Game Design"). He doesn't code.
 - Explain anything he must do himself in plain, numbered steps.
 - **Always end answers with sources** (his story, his design doc, GitHub, web pages), or say none were used.
+- **His story and design document are private and are not in this repository** (it's public). If a task needs them, ask David to attach them to the session. Don't copy their text into the repo.
 - He plays every build on his Android phone in Chrome, at https://dvdbraz-bot.github.io/Cornfield/ (capital C: the link is case-sensitive).
 
 ## How we work
