@@ -285,3 +285,7 @@ What's left:
 4. **Milestone 9: Google Play.** Developer account, the 12-tester closed test for 14 days, and the age rating.
 
 Before release: remove the five-tap "unlock all chapters" testing shortcut, or keep it as a hidden extra.
+
+## For future sessions
+- `CLAUDE.md` holds the working notes for Claude: how David likes to work, the workflow, lessons learned, and what's next.
+- `tests/` holds the automated playthroughs. Run them all with `bash tests/run-all.sh` (needs Playwright, which Claude's cloud sessions already have).
