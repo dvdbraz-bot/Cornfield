@@ -645,7 +645,7 @@ const CHAPTERS = {
         } });
         const tp = tileCentre(41, 16);
         const torch = c.add.container(tp.x, tp.y).setDepth(12).setAngle(30);
-        torch.add([c.add.rectangle(0, 0, 9, 3, 0x6a6a70), c.add.rectangle(5, 0, 2, 4, 0xfff0a0)]);
+        torch.add(c.artImage('objects/torch') || [c.add.rectangle(0, 0, 9, 3, 0x6a6a70), c.add.rectangle(5, 0, 2, 4, 0xfff0a0)]);
         await c.waitAct(tp.x, tp.y, 22);
         calling.remove();
         torch.destroy();
@@ -658,7 +658,7 @@ const CHAPTERS = {
         const j = c.npcs.jenny;
         SFX.play('crow', { vol: 0.8, pan: c.panTo(j.x) });
         c.cameras.main.shake(150, 0.01);
-        const crow = c.add.triangle(j.x, j.y - 8, 0, 4, 10, 0, 10, 8, 0x080808).setDepth(25);
+        const crow = (c.artImage('objects/crow', j.x, j.y - 8) || c.add.triangle(j.x, j.y - 8, 0, 4, 10, 0, 10, 8, 0x080808)).setDepth(25);
         c.tweens.add({ targets: crow, x: j.x + 120, y: j.y - 90, duration: 1400, onComplete: () => crow.destroy() });
         await c.talk([
           ['JENNY', 'Ah!'],
@@ -720,7 +720,7 @@ const CHAPTERS = {
         c.cameras.main.shake(300, 0.02);
         c.flag('windowBroken');
         c.drawOpenings();
-        const stone = c.add.ellipse(20 * T + 8, 7 * T + 8, 7, 5, 0x7a7a74).setDepth(13);
+        const stone = (c.artImage('objects/carved-stone', 20 * T + 8, 7 * T + 8) || c.add.ellipse(20 * T + 8, 7 * T + 8, 7, 5, 0x7a7a74)).setDepth(13);
         c.tweens.add({ targets: stone, y: 10 * T + 6, x: 21 * T, angle: 360, duration: 350 });
         await c.wait(600);
         await c.talk([
@@ -1375,7 +1375,7 @@ const CHAPTERS = {
         c.cast({ venn: null });
         c.glow = null;
         // her torch, dropped in the grass, still shining
-        c.add.rectangle(at.x, at.y, 7, 3, 0x6a6a70).setDepth(12).setAngle(20);
+        (c.artImage('objects/torch', at.x, at.y) || c.add.rectangle(at.x, at.y, 7, 3, 0x6a6a70)).setDepth(12).setAngle(20);
         c.extraLights = [{ x: at.x, y: at.y, r: 14 }];
         await c.wait(1500);
         c.camFollow = null;
@@ -1483,7 +1483,7 @@ const CHAPTERS = {
           await Promise.all(cans.map(([x, y]) => {
             const p = tileCentre(x, y);
             const can = c.add.container(p.x, p.y).setDepth(14);
-            can.add([c.add.rectangle(0, 1, 6, 8, 0x8a6a2a), c.add.rectangle(0, -4, 3, 2, 0x4a3a20)]);
+            can.add(c.artImage('objects/oil-can') || [c.add.rectangle(0, 1, 6, 8, 0x8a6a2a), c.add.rectangle(0, -4, 3, 2, 0x4a3a20)]);
             return c.waitAct(p.x, p.y, 20).then(() => {
               can.destroy();
               F.oilCans++;
@@ -1702,7 +1702,7 @@ const CHAPTERS = {
         c.setCutscene(true);
         await c.talk([[null, 'Near dawn. Pa\'s door opens.']]);
         const pa = c.npcs.walter;
-        pa.c.add(c.add.rectangle(6, 2, 2, 12, 0x3a2a1a)); // the shotgun
+        pa.c.add(c.artImage('objects/shotgun', 6, 2) || c.add.rectangle(6, 2, 2, 12, 0x3a2a1a)); // the shotgun
         c.camFollow = pa.c;
         if (c.has('forgave')) await c.talk([['PA', 'Look after Jean, son.']]);
         await c.walkNPC('walter', [[21, 18], [21, 16], [24, 13], [24, 11], [26, 11], [29, 14], [32, 19]], 30);
@@ -1795,7 +1795,7 @@ const CHAPTERS = {
           c.say('Three vials of holy water.', 2500);
           c.complete('vials7');
         })());
-        const can = c.add.rectangle(18 * T + 8, 32 * T + 8, 7, 9, 0xb02a1a).setDepth(14);
+        const can = (c.artImage('objects/petrol-can', 18 * T + 8, 32 * T + 8) || c.add.rectangle(18 * T + 8, 32 * T + 8, 7, 9, 0xb02a1a)).setDepth(14);
         fetch('petrol', 'Petrol, from the shed.', 18, 32, 'petrol', 'A red can of petrol, half full. It sloshes.');
         jobs[jobs.length - 1].then(() => can.destroy());
         fetch('matches', 'Matches, from the kitchen.', 15, 8, 'matches', 'A box of matches from the drawer by the stove.');

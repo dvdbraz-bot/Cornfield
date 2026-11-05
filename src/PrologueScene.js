@@ -27,7 +27,7 @@ class PrologueScene extends FieldScene {
   constructor() { super('Prologue'); }
 
   create() {
-    this.setupField(MAP, tileCentre(29, 8), { body: 0x8a7a62, head: 0xd9b99b, hair: 0x5a4a3a });
+    this.setupField(MAP, tileCentre(29, 8), { body: 0x8a7a62, head: 0xd9b99b, hair: 0x5a4a3a }, 'henry');
     Unlocks.unlock('prologue');
     this.makeProps();
 
@@ -70,29 +70,35 @@ class PrologueScene extends FieldScene {
 
   makeProps() {
     // The carved stone on the counter.
+    const stoneArt = this.artImage('objects/carved-stone', 19 * T + 8, 2 * T + 8);
+    if (stoneArt) stoneArt.setDepth(5);
     const stone = this.add.graphics().setDepth(5);
-    stone.fillStyle(0x6f6f6a, 1).fillEllipse(19 * T + 8, 2 * T + 8, 11, 8);
-    stone.lineStyle(1, 0x3a3a36, 1).strokeCircle(19 * T + 8, 2 * T + 8, 2);
-    stone.lineBetween(19 * T + 5, 2 * T + 6, 19 * T + 11, 2 * T + 10);
+    if (!stoneArt) stone.fillStyle(0x6f6f6a, 1).fillEllipse(19 * T + 8, 2 * T + 8, 11, 8);
+    if (!stoneArt) stone.lineStyle(1, 0x3a3a36, 1).strokeCircle(19 * T + 8, 2 * T + 8, 2);
+    if (!stoneArt) stone.lineBetween(19 * T + 5, 2 * T + 6, 19 * T + 11, 2 * T + 10);
 
     // The TV screen, flickering.
     this.tvScreen = this.add.rectangle(TV.x, TV.y, 30, 8, 0x8fb0d8).setDepth(5);
 
     // The back door (closed until Henry wakes).
-    this.door = this.add.rectangle(DOOR.x, DOOR.y, T, T, 0x6a4628).setDepth(5);
-    this.doorKnob = this.add.rectangle(DOOR.x + 5, DOOR.y, 2, 2, 0xc8b060).setDepth(6);
+    this.door = (this.artImage('objects/door-closed', DOOR.x, DOOR.y) || this.add.rectangle(DOOR.x, DOOR.y, T, T, 0x6a4628)).setDepth(5);
+    this.doorKnob = this.add.rectangle(DOOR.x + 5, DOOR.y, 2, 2, 0xc8b060).setDepth(6).setVisible(!Art.has('objects/door-closed'));
 
     // Justin (blue) and Phillip (green) at the table.
-    const boy = (tx, ty, col) => {
+    const boy = (tx, ty, col, who, frame) => {
       const p = tileCentre(tx, ty);
       const c = this.add.container(p.x, p.y).setDepth(10);
-      c.add(this.add.rectangle(0, 2, 9, 9, col));
-      c.add(this.add.circle(0, -4, 3.5, 0xe0c0a0));
+      const art = Art.key(this, 'people/' + who);
+      if (art) c.add(this.add.image(0, -1, art, frame));
+      else {
+        c.add(this.add.rectangle(0, 2, 9, 9, col));
+        c.add(this.add.circle(0, -4, 3.5, 0xe0c0a0));
+      }
       this.tweens.add({ targets: c, y: p.y - 1, duration: 400 + Math.random() * 300, yoyo: true, repeat: -1, repeatDelay: 1500 + Math.random() * 2000 });
       return c;
     };
-    this.justin = boy(13, 5, 0x3a5ea8);
-    this.phillip = boy(18, 5, 0x4a8a4a);
+    this.justin = boy(13, 5, 0x3a5ea8, 'justin', 3);   // facing right, across the table
+    this.phillip = boy(18, 5, 0x4a8a4a, 'phillip', 2); // facing left
   }
 
   async speak(who, name, text, ms) {
@@ -147,7 +153,7 @@ class PrologueScene extends FieldScene {
     // the door now hangs open, swung out onto the lawn
     this.door.destroy();
     this.doorKnob.destroy();
-    this.add.rectangle(DOOR.x - T / 2, DOOR.y + T / 2, 3, T - 2, 0x6a4628).setOrigin(0, 0).setDepth(5);
+    (this.artImage('objects/door-open', DOOR.x - T / 2, DOOR.y + T / 2) || this.add.rectangle(DOOR.x - T / 2, DOOR.y + T / 2, 3, T - 2, 0x6a4628)).setOrigin(0, 0).setDepth(5);
     const wake = tileCentre(27, 7);
     this.hx = wake.x; this.hy = wake.y;
     this.state = 'search';
@@ -235,10 +241,14 @@ class PrologueScene extends FieldScene {
     const from = { x: this.hx - this.fx * 40 + px * 6, y: this.hy - this.fy * 40 + py * 6 };
     const to = { x: this.hx + this.fx * 30 + px * 6, y: this.hy + this.fy * 30 + py * 6 };
     const ball = this.add.container(from.x, from.y).setDepth(18);
-    const g = this.add.graphics();
-    g.fillStyle(0x15100e, 1).fillCircle(0, 0, 5);
-    g.fillStyle(0x2a201c, 1).fillCircle(-2, -1, 1.5);
-    ball.add(g);
+    const headArt = this.artImage('objects/rolling-head');
+    if (headArt) ball.add(headArt);
+    else {
+      const g = this.add.graphics();
+      g.fillStyle(0x15100e, 1).fillCircle(0, 0, 5);
+      g.fillStyle(0x2a201c, 1).fillCircle(-2, -1, 1.5);
+      ball.add(g);
+    }
     SFX.play(to.x >= from.x ? 'rollLR' : 'rollRL', { vol: 0.7 });
     this.tweens.add({ targets: ball, x: to.x, y: to.y, angle: 720, duration: 1200, ease: 'Quad.easeOut' });
 

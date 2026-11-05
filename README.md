@@ -13,7 +13,7 @@ The start screen offers **Continue** (if there's a save), **New game** (the prol
 - **Storage:** unlocks are stored separately from the save, so a new game doesn't lock them again.
 - **Testing shortcut:** tap "Play with headphones." five times to unlock every chapter that's built.
 
-Coloured shapes stand in for the art (grey-box). All sounds are generated in code as placeholders.
+Coloured shapes stand in for the art (grey-box), until David's drawings replace them one by one (see **Milestone 3** below). All sounds are generated in code as placeholders.
 
 ## Milestone 1: grey-box prologue ("Come see") ✅
 About 6 minutes. Play as Henry Jacobs. It teaches movement, the lantern, and the two rules.
@@ -58,8 +58,22 @@ The thing in the field follows the six states from the design doc:
 
 **Debug view** (the DEBUG button at top right, or G on a keyboard): shows the creature, its state, its suspicion, its distance, how far it can see you, and where it's heading. Each further press moves the reach line to the next night. After the last one, the debug view hides again.
 
+## Milestone 3: placeholder art and real sound (started)
+**Art slots** (`src/art.js`). Every map tile, person (and Spike) and object that's drawn in code has a PNG file in `assets/`, in three folders: `tiles/`, `people/` and `objects/`. There are 77 slots.
+- **The full list,** in the order to draw them (what's on screen most first), with each file's size, what it is and where it appears, is in [`assets/ART-LIST.md`](assets/ART-LIST.md).
+- **The colours to use:** [`assets/palette.png`](assets/palette.png) has 24 dark, muted colours for night-time horror. Their codes are in ART-LIST.md.
+- **Sizes:** tiles are 16 x 16. People are a 64 x 16 strip of four 16 x 16 frames: facing down, up, left, right. Objects are their own sizes (in the list). Cars are drawn facing right.
+- **Two pictures for one thing:** the corn has a second, see-through picture for the leaves drawn over people (`tiles/corn-tops.png`). The creature's red eyes are separate from its body, because they shine through the dark. Windows and doors have overlays for locked, boarded and smashed.
+- **Placeholders:** each file starts as the grey-box drawing, exported at the exact size, so it can be opened in Piskel.
+- **How the game chooses:** when the game starts, it loads every PNG. While a file is still exactly the placeholder, the game keeps drawing that thing in code (which varies a little from tile to tile). As soon as the file is different (a real drawing), the game uses the picture. A missing, broken or wrong-sized file never breaks the game: missing or broken ones fall back to the code, and a wrong-sized one is stretched to fit (with a warning in the browser console).
+- **Updates show quickly:** the pictures are re-fetched every minute, so a new drawing appears soon after GitHub Pages republishes.
+- **Still drawn in code:** effects that move or change colour (the lantern, TV flicker, police lights, fire, splashes, noise rings, puddles, the kill), and the on-screen controls and notebook.
+- **Re-exporting:** `node tools/export-art.js` writes any missing placeholders, `palette.png` and `ART-LIST.md` from the slot list. It never overwrites an existing PNG (it might be David's drawing) unless given `--force`.
+- **The Jacobs' taped-off front door** now draws its yellow tape in whole pixels (crisper), so its placeholder is identical on every phone.
+
+Real sound is next.
+
 ## Milestone 4: the farm and its systems ✅ (with Day 1 and Night 1 to run them)
-Milestone 3 (placeholder art and sound) is on hold. The plan is to get the whole game playable in grey-box first and polish afterwards.
 
 **The Cole farm** (`FARM_MAP`), laid out from the sketch in the design doc:
 - The dirt road to Marrowfield and the cracked concrete driveway.
@@ -268,6 +282,9 @@ Day 1 and Night 1 are above. Added in this build:
 | `src/save.js` | The save game, and the chapter names |
 | `src/StartScene.js`, `src/EndScene.js` | Start menu, and the title / caught / dawn / end-of-chapter screens |
 | `src/sfx.js` | All sound effects, generated in code |
+| `src/art.js` | The art slots: every picture's file name and size, its grey-box placeholder, the palette, and loading David's drawings from `assets/` |
+| `assets/` | The pictures (`tiles/`, `people/`, `objects/`), `palette.png` and `ART-LIST.md` |
+| `tools/export-art.js` | Writes the placeholder PNGs, the palette and ART-LIST.md from `src/art.js` |
 | `src/controls.js` | Shared state between the controls, the game and the on-screen displays |
 | `manifest.webmanifest`, `icon-*.png` | Lets you add the game to your home screen as a fullscreen landscape app |
 
@@ -280,7 +297,7 @@ Day 1 and Night 1 are above. Added in this build:
 
 What's left:
 1. **Polish the concept:** playtest notes, difficulty tuning, and the real victims' names.
-2. **Milestone 3 / 7: art and audio.** Placeholder art first (16 x 16 tiles, sprites, real sound effects), then the final art and audio from asset packs or an artist.
+2. **Milestone 3 / 7: art and audio.** The art slots are in: David draws the pictures in Piskel, one at a time (`assets/ART-LIST.md`). Next: real sound effects, walking animation, then the final art and audio.
 3. **Milestone 8: the Android app.** Wrap it with Capacitor, add the icon and splash screen, and test on a cheap phone and a good one for 30 minutes to check it stays cool.
 4. **Milestone 9: Google Play.** Developer account, the 12-tester closed test for 14 days, and the age rating.
 

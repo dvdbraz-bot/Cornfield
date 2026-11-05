@@ -18,7 +18,12 @@ class NPC {
     this.look = CAST[id];
     this.name = this.look.name;
     const c = scene.add.container(x, y).setDepth(14);
-    if (this.look.dog) {
+    const art = Art.key(scene, Art.personId(id));
+    if (art) {
+      // David's drawing: a strip of four frames (down, up, left, right)
+      this.sprite = scene.add.image(0, -1, art, 0);
+      c.add(this.sprite);
+    } else if (this.look.dog) {
       c.add(scene.add.rectangle(0, 2, 12, 6, this.look.body));
       this.head = scene.add.rectangle(6, 0, 5, 5, this.look.body);
       c.add(this.head);
@@ -37,6 +42,15 @@ class NPC {
 
   place(x, y) { this.c.setPosition(x, y); return this; }
 
+  // Turn to face a direction (only people David has drawn have facings).
+  face(dx, dy) {
+    if (!this.sprite || (!dx && !dy)) return this;
+    const f = artFrame(dx, dy);
+    this.sprite.setFrame(f);
+    if (this.eyes) this.eyes.setFrame(f);
+    return this;
+  }
+
   // Walk through a list of points: [[x, y], ...] in pixels. Resolves on arrival.
   walk(points, speed = 40) {
     return new Promise(res => {
@@ -44,7 +58,8 @@ class NPC {
         if (i >= points.length || !this.c.active) { res(); return; }
         const [x, y] = points[i];
         const d = Phaser.Math.Distance.Between(this.c.x, this.c.y, x, y);
-        if (this.look.dog) this.c.scaleX = x < this.c.x ? -1 : 1;
+        if (this.sprite) this.face(x - this.c.x, y - this.c.y);
+        else if (this.look.dog) this.c.scaleX = x < this.c.x ? -1 : 1;
         this.s.tweens.add({ targets: this.c, x, y, duration: Math.max(1, d / speed * 1000), onComplete: () => next(i + 1) });
       };
       next(0);
@@ -57,6 +72,12 @@ class NPC {
 
   // Holding his own head: the head is in his hand, not on his shoulders.
   headless() {
+    if (this.sprite) {
+      const k = Art.key(this.s, 'people/jason-headless');
+      if (k) this.sprite.setTexture(k);
+      else { this.sprite.setFrame(0).setCrop(0, 7, 16, 9); this.c.add(this.s.add.circle(6, 5, 3.5, this.look.head)); }
+      return this;
+    }
     this.c.list.forEach((o, i) => { if (i > 0) o.setVisible(false); });
     this.c.add(this.s.add.circle(6, 5, 3.5, this.look.head));
     return this;
@@ -64,6 +85,11 @@ class NPC {
 
   // Red eyes (it is wearing him).
   redEyes() {
+    if (this.sprite) {
+      this.eyes = this.s.add.image(0, -1, Art.key(this.s, 'people/red-eyes', true), this.sprite.frame.name);
+      this.c.add(this.eyes);
+      return this;
+    }
     this.c.add(this.s.add.rectangle(-1.5, -5, 1, 1, 0xff2010));
     this.c.add(this.s.add.rectangle(1.5, -5, 1, 1, 0xff2010));
     return this;

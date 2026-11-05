@@ -30,8 +30,9 @@ const NIGHT = {
 };
 
 class FieldScene extends Phaser.Scene {
-  // look: colours for the player. start: {x, y} in pixels.
-  setupField(map, start, look) {
+  // look: colours for the player. start: {x, y} in pixels. who: whose
+  // picture to use from assets/people/ ('michael', 'henry', 'jason'...).
+  setupField(map, start, look, who = 'michael') {
     this.runId = ++RUN_ID;
     this.map = map;
     Controls.reset();
@@ -51,11 +52,19 @@ class FieldScene extends Phaser.Scene {
     this.hx = start.x; this.hy = start.y;
     this.fx = 0; this.fy = 1; // facing
     this.player = this.add.container(this.hx, this.hy).setDepth(15);
-    this.playerBody = this.add.rectangle(0, 1, 10, 11, look.body);
-    this.playerHead = this.add.circle(0, -5, 3.5, look.head);
-    this.playerNose = this.add.rectangle(0, -3, 2, 2, look.hair);
     this.playerLamp = this.add.rectangle(6, 3, 3, 4, 0xffd27a);
-    this.player.add([this.playerBody, this.playerHead, this.playerNose, this.playerLamp]);
+    const art = Art.key(this, Art.personId(who));
+    if (art) {
+      // David's drawing: a strip of four frames (down, up, left, right)
+      this.playerSprite = this.playerBody = this.add.image(0, -1, art, 0);
+      this.player.add([this.playerSprite, this.playerLamp]);
+    } else {
+      this.playerSprite = null;
+      this.playerBody = this.add.rectangle(0, 1, 10, 11, look.body);
+      this.playerHead = this.add.circle(0, -5, 3.5, look.head);
+      this.playerNose = this.add.rectangle(0, -3, 2, 2, look.hair);
+      this.player.add([this.playerBody, this.playerHead, this.playerNose, this.playerLamp]);
+    }
 
     const { width, height } = this.scale;
     if (!this.textures.exists('dark')) this.textures.createCanvas('dark', width, height);
@@ -204,7 +213,9 @@ class FieldScene extends Phaser.Scene {
   drawPlayer() {
     this.player.setPosition(Math.round(this.hx), Math.round(this.hy));
     this.playerLamp.setFillStyle(this.lanternOn ? 0xffd27a : 0x5a4a30);
-    if (!this.playerDown) {
+    if (this.playerSprite) {
+      if (!this.playerDown) this.playerSprite.setFrame(artFrame(this.fx, this.fy));
+    } else if (!this.playerDown) {
       const ax = Math.round(this.fx * 1.5), ay = Math.round(this.fy * 1.5);
       this.playerHead.setPosition(ax, -5 + ay * 0.5);
       this.playerNose.setPosition(ax * 2, -5 + ay * 2);
@@ -384,6 +395,12 @@ class FieldScene extends Phaser.Scene {
   makeCreatureLook() {
     // Body: only seen in lantern light (it is drawn under the darkness).
     const c = this.add.container(0, 0).setDepth(16);
+    this.cBody = c;
+    const body = Art.key(this, 'objects/creature'), eyes = Art.key(this, 'objects/creature-eyes');
+    if (body) c.add(this.add.image(0, 4, body).setOrigin(0.5, 1)); // its feet at the bottom of the picture
+    if (eyes) this.cEyes = this.add.image(0, 0, eyes).setDepth(1060);
+    if (body && eyes) return;
+    if (body) { this.makeCodedEyes(); return; }
     const g = this.add.graphics();
     g.fillStyle(0x0a0806, 1);
     g.fillRect(-7, -22, 14, 22);          // body
@@ -393,7 +410,10 @@ class FieldScene extends Phaser.Scene {
     g.fillTriangle(6, -27, 3, -29, 9, -36);
     g.fillRect(-11, -20, 4, 14).fillRect(7, -20, 4, 14); // long arms
     c.add(g);
-    this.cBody = c;
+    if (!eyes) this.makeCodedEyes();
+  }
+
+  makeCodedEyes() {
     // Eyes: two slanted red slits, drawn above the darkness.
     const e = this.add.graphics().setDepth(1060);
     e.fillStyle(0xff2a1a, 1);
@@ -418,12 +438,25 @@ class FieldScene extends Phaser.Scene {
     if (!id) return;
     const look = CAST[id];
     const c = this.add.container(0, 0).setDepth(16).setScale(1.6);
+    this.cSkin = c;
+    const art = Art.key(this, Art.personId(id));
+    if (art) {
+      c.add(this.add.image(0, -8, art, 0));
+      c.add(this.add.image(0, -8, Art.key(this, 'people/red-eyes', true), 0));
+      return;
+    }
     c.add(this.add.rectangle(0, -6, 9, 10, look.body));
     c.add(this.add.circle(0, -12, 3.5, look.head));
     c.add(this.add.rectangle(0, -15, 7, 3, look.hair));
     c.add(this.add.rectangle(-1.5, -12, 1, 1, 0xff2010));
     c.add(this.add.rectangle(1.5, -12, 1, 1, 0xff2010));
-    this.cSkin = c;
+  }
+
+  // An art slot's picture as a game object at (x, y), or null if David hasn't
+  // drawn it yet (then the caller draws its grey-box shapes instead).
+  artImage(id, x = 0, y = 0) {
+    const k = Art.key(this, id);
+    return k ? this.add.image(x, y, k) : null;
   }
 
   drawCreature(time) {

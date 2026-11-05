@@ -22,6 +22,7 @@ Read README.md first: it records everything that's built, chapter by chapter, an
 - `src/chapters.js` is the story: each chapter is a list of async steps using helpers in `src/ChapterScene.js` (talk, objective, clue, waitAct, waitFor, cast, walkNPC, setCutscene, lock, endChapter...). The game saves the step number, so **each step must set up who/what it needs at its start** (so a saved game can resume there).
 - `src/Creature.js`: the creature's brain (6 states) and `Stalker` (felt, never seen). `src/FieldScene.js`: shared movement, noise, lantern/darkness, bubbles, the kill. `src/UIScene.js`: touch controls, dialogue, notebook. `src/map.js`: all maps.
 - Chapter order and names: `Unlocks.ORDER` and `CHAPTER_NAMES` in `src/save.js`.
+- `src/art.js`: the art slots. David draws pictures in Piskel and uploads them to `assets/` on GitHub. **Never overwrite a PNG in `assets/`** (it may be his drawing): `node tools/export-art.js` only adds missing ones. Anything new drawn in code should get a slot (add it to `ART_SLOTS`, use `Art.draw` on the map or `scene.artImage` / `Art.key` for game objects, keep the coded drawing as the fallback, then run the export).
 
 ## Lessons learned (bugs David hit on his phone)
 - Test with **touch**, not just the keyboard: a bug once left the joystick hidden after every dialogue. `tests/touch-controls.js` covers it.

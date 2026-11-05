@@ -48,8 +48,7 @@ class TestNightScene extends FieldScene {
     // Lamp oil flasks.
     this.flasks = [tileCentre(8, 30), tileCentre(24, 8), tileCentre(45, 27)].map(p => {
       const g = this.add.container(p.x, p.y).setDepth(14);
-      g.add(this.add.rectangle(0, 1, 5, 7, 0x8a6a2a));
-      g.add(this.add.rectangle(0, -4, 3, 2, 0x4a3a20));
+      g.add(this.artImage('objects/oil-can') || [this.add.rectangle(0, 1, 5, 7, 0x8a6a2a), this.add.rectangle(0, -4, 3, 2, 0x4a3a20)]);
       return { ...p, g, taken: false };
     });
     this.interactables = [
@@ -76,7 +75,11 @@ class TestNightScene extends FieldScene {
     const g = this.reachGfx;
     g.clear();
     const x = this.reachX;
+    (this.reachImgs || []).forEach(o => o.destroy());
+    this.reachImgs = [];
     for (let ty = 1; ty < this.map.H - 1; ty++) {
+      const art = this.artImage('tiles/dead-grass', x, ty * T + 8);
+      if (art) { this.reachImgs.push(art.setDepth(2)); continue; }
       for (let i = 0; i < 5; i++) {
         const yy = ty * T + ((i * 7 + ty * 3) % 16);
         g.fillStyle(i % 2 ? 0x6b5a2a : 0x7a6a34, 1).fillRect(x - 4 + ((i * 5 + ty) % 8), yy, 2, 2);

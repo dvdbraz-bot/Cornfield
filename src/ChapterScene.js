@@ -40,7 +40,7 @@ class ChapterScene extends FieldScene {
     this.night = !!this.ch.night;
     const start = (this.resuming && S.x != null) ? { x: S.x, y: S.y } : tileCentre(...this.ch.start);
     // Most chapters are Michael's; a few doomed scenes are someone else's.
-    this.setupField(FARM_MAP, start, this.ch.player ? CAST[this.ch.player] : MICHAEL_LOOK);
+    this.setupField(FARM_MAP, start, this.ch.player ? CAST[this.ch.player] : MICHAEL_LOOK, this.ch.player || 'michael');
     this.cornAllowed = false;
     Controls.notebook = !this.ch.player; // the notebook is Michael's
     Controls.gameScene = 'Chapter';
@@ -234,12 +234,12 @@ class ChapterScene extends FieldScene {
   // Duck under police tape across a doorway: from (tx, ty) to the other side.
   async duckUnder(fromTy, toTy, tx) {
     this.frozen = true;
-    this.tweens.add({ targets: this.playerBody, scaleY: 0.55, y: 3, duration: 200 });
+    this.tweens.add({ targets: this.playerBody, scaleY: 0.55, y: '+=2', duration: 200 });
     await this.wait(250);
     const to = tileCentre(tx, toTy);
     this.tweens.add({ targets: this, hx: to.x, hy: to.y, duration: 700 });
     await this.wait(750);
-    this.tweens.add({ targets: this.playerBody, scaleY: 1, y: 1, duration: 200 });
+    this.tweens.add({ targets: this.playerBody, scaleY: 1, y: '-=2', duration: 200 });
     await this.wait(200);
     this.frozen = this.cutscene;
   }
@@ -284,6 +284,9 @@ class ChapterScene extends FieldScene {
   showDeadSpike() {
     if (this.deadSpike) return;
     const d = this.add.container(50 * T + 8, 23 * T + 8).setDepth(13);
+    this.deadSpike = d;
+    const art = this.artImage('objects/dead-spike', 1, 2);
+    if (art) { d.add(art); return; }
     d.add(this.add.ellipse(1, 2, 24, 11, 0x4a0a0a, 0.85));
     d.add(this.add.rectangle(0, 0, 12, 6, 0xc8a060));
     d.add(this.add.rectangle(-7, 0, 3, 2, 0xc8a060));
@@ -302,7 +305,7 @@ class ChapterScene extends FieldScene {
       const dx = this.hx - n.x, dy = this.hy - n.y, d = Math.hypot(dx, dy);
       if (d < 1.8 * T) continue;
       const step = Math.min(d - 1.5 * T, 50 * dt);
-      n.place(n.x + dx / d * step, n.y + dy / d * step);
+      n.place(n.x + dx / d * step, n.y + dy / d * step).face(dx, dy);
     }
   }
 
@@ -312,6 +315,8 @@ class ChapterScene extends FieldScene {
     const x = this.reachX;
     for (let ty = 3; ty < 38; ty++) {
       if (ty >= 7 && ty <= 25) continue; // (the house is in the way here)
+      const art = this.artImage('tiles/dead-grass', x, ty * T + 8);
+      if (art) { art.setDepth(2); continue; }
       for (let i = 0; i < 6; i++) {
         const yy = ty * T + ((i * 7 + ty * 3) % 16);
         g.fillStyle(i % 2 ? 0x6b5a2a : 0x8a7a40, 1).fillRect(x - 6 + ((i * 5 + ty * 3) % 12), yy, 2, 3);
@@ -325,12 +330,16 @@ class ChapterScene extends FieldScene {
   // Stones torn out of the ring: holes where they were. (SaveGame.state.stones says how many are left.)
   drawMissingStones() {
     if (this.stoneHoles) this.stoneHoles.destroy();
+    if (this.stoneHoleImgs) this.stoneHoleImgs.forEach(o => o.destroy());
+    this.stoneHoleImgs = [];
     const g = this.stoneHoles = this.add.graphics().setDepth(3);
     const R = this.map.RING, lost = 12 - SaveGame.state.stones;
     const order = [0, 4, 8, 2, 6, 10, 1, 5, 9, 3, 7, 11]; // torn out round the ring
     for (let k = 0; k < lost; k++) {
       const a = order[k] / 12 * Math.PI * 2;
       const x = Math.round(R.x + Math.cos(a) * 34), y = Math.round(R.y + Math.sin(a) * 34);
+      const art = this.artImage('objects/stone-hole', x, y);
+      if (art) { art.setDepth(3); this.stoneHoleImgs = [...(this.stoneHoleImgs || []), art]; continue; }
       g.fillStyle(0x2a1e10, 1).fillRect(x - 4, y - 3, 8, 7);   // a raw hole in the earth
     }
   }
@@ -356,7 +365,7 @@ class ChapterScene extends FieldScene {
     this.lamps = this.lamps || [];
     const p = tileCentre(tx, ty);
     const g = this.add.container(p.x, p.y).setDepth(14);
-    g.add([this.add.rectangle(0, 2, 5, 6, 0x8a6a2a), this.add.rectangle(0, -3, 3, 4, 0xffd27a)]);
+    g.add([this.artImage('objects/oil-lamp') || this.add.rectangle(0, 2, 5, 6, 0x8a6a2a), this.add.rectangle(0, -3, 3, 4, 0xffd27a)]);
     const lamp = { id, x: p.x, y: p.y, fuel: 1, g, flame: g.list[1] };
     this.lamps.push(lamp);
     const st = tileCentre(standTx, standTy);
@@ -459,13 +468,16 @@ class ChapterScene extends FieldScene {
   // The thing itself, walked through a scene by the script (never by its brain).
   makeIntruder(x, y) {
     const c = this.add.container(x, y).setDepth(16);
-    const g = this.add.graphics();
-    g.fillStyle(0x0a0806, 1);
-    g.fillRect(-7, -22, 14, 22).fillRect(-6, -2, 4, 6).fillRect(2, -2, 4, 6).fillCircle(0, -25, 6);
-    g.fillTriangle(-6, -27, -3, -29, -9, -36).fillTriangle(6, -27, 3, -29, 9, -36);
-    g.fillRect(-11, -20, 4, 14).fillRect(7, -20, 4, 14);
-    const eyes = this.add.graphics();
-    eyes.fillStyle(0xff2a1a, 1).fillRect(-4, -26, 3, 1).fillRect(1, -26, 3, 1);
+    const body = this.artImage('objects/creature', 0, 4), eyesArt = this.artImage('objects/creature-eyes', 0, -25.5);
+    if (body) body.setOrigin(0.5, 1);
+    if (body && eyesArt) { c.add([body, eyesArt]); return c; }
+    const g = body || this.add.graphics();
+    if (!body) g.fillStyle(0x0a0806, 1);
+    if (!body) g.fillRect(-7, -22, 14, 22).fillRect(-6, -2, 4, 6).fillRect(2, -2, 4, 6).fillCircle(0, -25, 6);
+    if (!body) g.fillTriangle(-6, -27, -3, -29, -9, -36).fillTriangle(6, -27, 3, -29, 9, -36);
+    if (!body) g.fillRect(-11, -20, 4, 14).fillRect(7, -20, 4, 14);
+    const eyes = eyesArt || this.add.graphics();
+    if (!eyesArt) eyes.fillStyle(0xff2a1a, 1).fillRect(-4, -26, 3, 1).fillRect(1, -26, 3, 1);
     c.add([g, eyes]);
     return c;
   }
@@ -482,7 +494,8 @@ class ChapterScene extends FieldScene {
   oilFlask(tx, ty, amount = 0.35) {
     const p = tileCentre(tx, ty);
     const g = this.add.container(p.x, p.y).setDepth(14);
-    g.add([this.add.rectangle(0, 1, 5, 7, 0x8a6a2a), this.add.rectangle(0, -4, 3, 2, 0x4a3a20)]);
+    const art = this.artImage('objects/oil-can');
+    g.add(art ? [art] : [this.add.rectangle(0, 1, 5, 7, 0x8a6a2a), this.add.rectangle(0, -4, 3, 2, 0x4a3a20)]);
     const it = { x: p.x, y: p.y, r: 22, when: () => true, act: () => {
       this.interactables = this.interactables.filter(o => o !== it);
       g.destroy();
@@ -499,7 +512,7 @@ class ChapterScene extends FieldScene {
     const n = this.npcs[id];
     n.c.setAngle(angle).setDepth(12);
     const p = tileCentre(tx, ty);
-    this.add.ellipse(p.x + 2, p.y + 2, 22, 12, 0x4a0a0a, 0.8).setDepth(11);
+    (this.artImage('objects/bloodstain', p.x + 2, p.y + 2) || this.add.ellipse(p.x + 2, p.y + 2, 22, 12, 0x4a0a0a, 0.8)).setDepth(11);
     return n;
   }
 
@@ -531,7 +544,16 @@ class ChapterScene extends FieldScene {
   // Cars: 'red' (Michael's), 'police', 'beetle' (Jason and Jean's).
   makeCar(kind, x, y, angle = 0) {
     const c = this.add.container(x, y).setDepth(13).setAngle(angle);
-    if (kind === 'truck') {
+    const art = this.artImage({ red: 'objects/red-car', police: 'objects/police-car', beetle: 'objects/beetle', truck: 'objects/pickup' }[kind]);
+    if (art) {
+      c.add(art);
+      if (kind === 'police') {
+        c.lightA = this.add.rectangle(2, -3, 4, 3, 0xff3030);
+        c.lightB = this.add.rectangle(2, 3, 4, 3, 0x3060ff);
+        c.add([c.lightA, c.lightB]);
+        this.tweens.add({ targets: [c.lightA, c.lightB], alpha: 0.2, duration: 150, yoyo: true, repeat: -1 });
+      }
+    } else if (kind === 'truck') {
       // Pa's old pickup, rusted red
       c.add(this.add.rectangle(0, 0, 32, 15, 0x7a2a1e));
       c.add(this.add.rectangle(6, 0, 10, 13, 0x2a3036));
@@ -598,20 +620,35 @@ class ChapterScene extends FieldScene {
   drawOpenings() {
     const g = this.openingGfx;
     g.clear();
+    (this.openingImgs || []).forEach(o => o.destroy());
+    this.openingImgs = [];
+    // David's drawing for this, if there is one (laid over the tile at x, y)
+    const art = (id, x, y, angle = 0) => {
+      const im = this.artImage(id, x, y);
+      if (im) this.openingImgs.push(im.setDepth(4).setAngle(angle));
+      return !!im;
+    };
     for (const [id, o] of Object.entries(OPENINGS)) {
       const x = o.tile[0] * T, y = o.tile[1] * T;
       const locked = this.locks.has(id);
       if (o.door) {
+        if (locked && art('objects/door-closed', x + 8, y + 8)) continue;
+        if (!locked && o.tile[1] === 7 && art('objects/door-open', x + 0.5, y - 6.5)) continue;
+        if (!locked && o.tile[1] !== 7 && art('objects/door-open', x + T + 6.5, y + 0.5, 90)) continue;
         if (locked) { g.fillStyle(0x6a4628, 1).fillRect(x, y, T, T); g.fillStyle(0xc8b060, 1).fillRect(x + 7, y + 6, 2, 4); }
         else if (o.tile[1] === 7) { g.fillStyle(0x8a5a30, 1).fillRect(x - 1, y - 13, 3, 13); } // front door, swung open onto the step
         else { g.fillStyle(0x8a5a30, 1).fillRect(x + T, y - 1, 13, 3); }                     // back door, swung open onto the porch
       } else {
+        if (this.has('boarded:' + id) && art('objects/window-boards', x + 8, y + 8)) continue;
         if (this.has('boarded:' + id)) {
           // boarded up for the siege
           g.fillStyle(0x7a5a34, 1).fillRect(x, y + 3, T, 3).fillRect(x, y + 8, T, 3);
           g.fillStyle(0x3a2a18, 1).fillRect(x + 3, y + 4, 1, 1).fillRect(x + 12, y + 9, 1, 1);
           continue;
         }
+        if (id === 'kitchenWindow' && this.has('windowBroken') && art('objects/window-broken', x + 8, y + 8)) continue;
+        if (locked && art('objects/window-curtains', x + 8, y + 8)) continue;
+        if (!locked && Art.has('tiles/window') && !(id === 'kitchenWindow' && this.has('windowBroken'))) continue; // (David's window tile shows the glass)
         // open windows show the night through them; locked ones have their latch down and curtains drawn
         g.fillStyle(locked ? 0x5a3030 : 0x0a1018, 1).fillRect(x + 2, y + 3, 12, 8);
         if (locked) g.fillStyle(0x7a4040, 1).fillRect(x + 7, y + 3, 2, 8);
